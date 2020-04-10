@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : classification-mapper.xml
+Description : 분류
+수정일     수정자  수정내용
+====       =====  ================
+2019.11.20 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.classification.ClassificationMapper">
+
+	<select id="list"  resultType="Classstructure" parameterType="map">
+		select	0 as chk
+			,	tb.* 
+			,   (
+                    getclassnm_fn(tb.org_id, split_part(tb.hierarchypath,'/',2) )||split_part(tb.hierarchypath||'/',tb.classstructure_id||'/',1) 
+                ) as path 
+			,	getclassnm_fn(tb.org_id, tb.classstructure_id) as classstructure_nm	 	  
+		from 	classstructure tb
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test="orgId != null and orgId != ''">
+		and		org_id = #{orgId}	
+		</if>
+		<if test="classstructureId != null and classstructureId != ''">
+		and		classstructure_id = #{classstructureId}		
+		</if>
+		<if test="object != null and object != ''">
+		and  	exists 	(
+							select 	1
+							from 	classusewith tb1
+							where 	tb1.org_id = tb.org_id 
+							and		tb1.classstructure_Id = tb.classstructure_Id
+							and 	tb1.object = #{object}
+						)	
+		</if>
+		order by path, description
+	</select>
+
+	<select id="treeList"  resultType="map" parameterType="map">
+		select	0 as chk
+			,	tb.* 
+			,   (
+                    getclassnm_fn(tb.org_id, split_part(tb.hierarchypath,'/',2) )||split_part(tb.hierarchypath||'/',tb.classstructure_id||'/',1) 
+                ) as path 
+			,	getclassnm_fn(tb.org_id, tb.classstructure_id) as classstructure_nm
+		from 	classstructure tb
+		where 	1=1
+		<if test="orgId != null and orgId != ''">
+		and		org_id = #{orgId}	
+		</if>
+		<if test="object != null and object != ''">
+		and  	exists 	(
+							select 	1
+							from 	classusewith tb1
+							where 	tb1.org_id = tb.org_id 
+							and		tb1.classstructure_Id = tb.classstructure_Id
+							and 	tb1.object = #{object}
+						)	
+		</if>
+		order by path, description
+	</select>
+
+	<select id="deleteAncestorlist"  resultType="map" parameterType="map">
+		select  split_part(tb1.hierarchypath||'/',tb2.ancestor||'/',1) as path
+			,   tb2.ancestor
+			,   tb1.classstructure_id 
+		from    classstructure tb1
+			,   (
+					select  org_id    
+						,   classstructure_id
+						,   ancestor
+					from    classancestor
+					where   org_id = #{orgId}
+					and		ancestor = #{classstructureId}
+				) tb2
+		where   tb1.classstructure_id = tb2.classstructure_id  
+		and     tb1.org_id = tb2.org_id  
+	</select>
+
+	<delete id="deleteAncestor" parameterType="map">
+        DELETE 	FROM CLASSANCESTOR
+        WHERE   ORG_ID = #{orgId}
+		AND		ANCESTOR = #{ancestor}
+		AND		CLASSSTRUCTURE_ID = #{classstructureId}	
+    </delete>
+
+	<select  id="findParent" parameterType="string" resultType="string">
+
+		select 	ancestor as "parent"
+		from 	classancestor 
+		where (
+				ancestor = 'SERVER'
+				and classstructure_id = (select classstructure_id from classstructure where classstructure_id = #{classstructureId})
+			  )
+		or 	  ( ancestor = 'SW_MIDDLESW'
+				and classstructure_id = (select classstructure_id from classstructure where classstructure_id = #{classstructureId})
+			  )
+		or 	  ( ancestor = 'SW_DBSW'
+				and classstructure_id = (select classstructure_id from classstructure where classstructure_id = #{classstructureId})
+			  )
+		or 	  ( ancestor = 'NETWORK'
+				and classstructure_id = (select classstructure_id from classstructure where classstructure_id = #{classstructureId})
+			  )
+
+		<!-- select
+		(case  when parent = 'SVR_SINGLE' then 'SERVER'
+			   when parent = 'SVR_VIRTUAL' then 'SERVER'
+			   when #{classstructureId} = 'NETWORK' then 'NETWORK'
+			   when #{classstructureId} = 'SW_MIDDLESW_WAS' then 'SW_MIDDLESW_WAS'
+			   else parent
+		end)
+		parent from classstructure
+		where classstructure_id = #{classstructureId} -->
+
+	</select>
+
+	<select id="property"  resultType="Classstructure" parameterType="String">
+		select	* from classstructure where classstructure_id = #{ancestor} 
+	</select>
+
+</mapper>

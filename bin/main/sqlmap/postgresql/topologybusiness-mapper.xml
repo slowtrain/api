@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : topologybusiness-mapper.xml
+Description : 토폴로지 비지니스 팝업 sql
+수정일     수정자  수정내용
+====       =====  ================
+2019.11.18 백승우  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.topology.TopologyBusinessMapper">
+	
+	<sql id="node">
+		select
+			 ci.id as uid
+			,ci.ci_id as id
+			,(case when #{depth} = 0 then 40 else 40 end) as width
+			,(case when #{depth} = 0 then 40 else 40 end) as height
+			,ci.ciname
+			,ci.ciname || ' / '|| ci.classstructure_id || ' / ' || #{depth} as name
+			,ci.ci_id as "ciId"
+			,ci.classstructure_id as "classstructureId"
+			,(select description from classstructure where classstructure_id=ci.classstructure_id) as "classstructureNm"
+			,ci.status
+			,'[]' as event
+			,#{depth} as depth
+			,'false' as connected
+			<!--
+			, exists (select 1 from disci where datasrc='BFI' and ci_id=ci.ci_id) bfi
+			, exists (select 1 from disci where datasrc='TADDM' and ci_id=ci.ci_id) taddm
+			, exists (select 1 from disci where datasrc='WATCHALL' and ci_id=ci.ci_id) watchall
+			-->
+			, (select ancestor from classancestor where ancestor in (select classstructure_id from classstructure where parent is null) and  classstructure_id=ci.classstructure_id) ancestor
+			,(select classiconsvg from classstructure where org_id=ci.org_id and classstructure_id=ci.classstructure_id) as "content"
+			,#{standardDate} "standardDate"
+			,#{startClass} "startClass"
+			, 128|256|2|4|32 as "constraints"
+		from ci
+	</sql>
+
+	<sql id="ancestorLink">
+		select
+			('RE'||cast(id as text)) as "id"
+			,'Orthogonal' as "type"
+			,sourceci
+			,targetci
+			,sourceci as "sourceID"
+			,targetci as "targetID"
+			,'#73818f' _color
+			,'#73818f' original_color
+			,relationname as name
+			,status
+			,16384 as "constraints"
+		from cirelation
+		where org_id='KAI'
+		and status = 'ACTIVE'
+		and end_dt <![CDATA[ >= ]]>  to_timestamp(#{standardDate}, 'yyyy-mm-dd')
+		<if test="ancestor == 'BUSINESSSYSTEM' ">
+		and relationname = 'INCLUDE'
+		and (targetci = #{ciId} 
+			 and exists (select 1 
+						from classancestor 
+						where ancestor ='BUSINESSSYSTEM' 
+						and classstructure_id=(select classstructure_id from ci where ci_id=sourceci)
+						)
+		)
+		</if>
+
+		<if test="ancestor == 'GROUP_1' ">
+			and relationname = 'INCLUDE'
+			and (targetci = #{ciId} 
+			     and exists (select 1 
+							from classancestor 
+							where ancestor in ('BUSINESSSYSTEM','GROUP_1') 
+							and classstructure_id=(select classstructure_id from ci where ci_id=sourceci)
+						   )
+		    )
+		</if>
+	</sql>
+
+	<sql id="childrenLink">
+		select
+			('RE'||cast(id as text)) as "id"
+			,'Orthogonal' as "type"
+			,sourceci
+			,targetci
+			,sourceci as "sourceID"
+			,targetci as "targetID"
+			,'#73818f' _color
+			,'#73818f' original_color
+			,relationname as name
+			,status
+			,16384 as "constraints"
+		from cirelation
+		where org_id='KAI'
+		and status = 'ACTIVE'
+		and end_dt <![CDATA[ >= ]]>  to_timestamp(#{standardDate}, 'yyyy-mm-dd')
+		<if test="ancestor == 'BUSINESSSYSTEM' ">
+		and relationname = 'INCLUDE'
+		and (sourceci = #{ciId}
+			   and exists (select 1
+			   			   from classancestor 
+			   			   where ancestor in ('BUSINESSSYSTEM','GROUP_1') 
+			   			   and classstructure_id=(select classstructure_id from ci where ci_id=targetci)
+						   )
+			)
+		</if>
+
+		<if test="ancestor == 'GROUP_1' ">
+			and relationname = 'INCLUDE'
+			and (sourceci = #{ciId} 
+			   and exists (select 1 
+			   			   from classancestor
+			   			   where ancestor in ('SOFTWARE','HARDWARE','GROUP_1','DATAINTERFACE') 
+			   			   and classstructure_id=(select classstructure_id from ci where ci_id=targetci)
+						   )
+			  ) 
+		</if>
+	
+
+		<if test="ancestor == 'DATAINTERFACE' ">
+			and relationname = 'RUN'
+			and targetci = #{ciId}
+		</if>
+
+		<if test="ancestor == 'SOFTWARE' ">
+			and relationname = 'RUN'
+			and targetci = #{ciId}
+		</if>
+		<if test="ancestor != 'BUSINESSSYSTEM' and  ancestor != 'GROUP_1' and  ancestor != 'DATAINTERFACE' and  ancestor != 'SOFTWARE' ">
+			and	1=0
+		</if>	
+	</sql>
+
+
+	<select id="getNode"  resultType="map" parameterType="map">
+		<include refid="node"/>
+		where org_id = 'KAI'
+		and ci_id = #{ciId}
+	</select>
+
+	<select id="getStartClass"  resultType="string" parameterType="map">
+		select 
+		(case when exists (select 1  from classancestor where  ancestor = 'BUSINESSSYSTEM' and classstructure_id=#{classstructureId}) then 'BUSINESS' else 'APPLICATION' end ) "startClass"
+	</select>
+
+	<select id="getAncestorLinks"  resultType="map" parameterType="map">
+		<include refid="ancestorLink"/>
+	</select>
+
+	<select id="getAncestorNodes"  resultType="map" parameterType="map">
+		<include refid="node"/>
+		inner join (<include refid="ancestorLink"/>) relation
+		on (ci.ci_id=relation.sourceci or ci.ci_id=relation.targetci)
+		and ci.org_id='KAI'
+		where ci.ci_id != #{ciId}
+	</select>
+
+	<select id="getChildrenLinks"  resultType="map" parameterType="map">
+		<include refid="childrenLink"/>
+	</select>
+
+	<select id="getChildrenNodes"  resultType="map" parameterType="map">
+		<include refid="node"/>
+		inner join (<include refid="childrenLink"/>) relation
+		on (ci.ci_id=relation.sourceci or ci.ci_id=relation.targetci)
+		and ci.org_id='KAI'
+		where ci.ci_id != #{ciId}
+	</select>
+
+	<select id="getEvent"  resultType="map" parameterType="map">
+		select 
+			 event.id
+			,event.ci_id
+			,event.severity
+			,event.level
+			,(select value from domain where domain_id='SEVERITYCOLOR' and key=event.severity) as _color
+		from event
+		where ci_id = #{ciId}
+	</select>
+
+	<select id="getEvents"  resultType="map" >
+		select 
+			 event.id
+			,event.ci_id
+			,event.severity
+			,event.level
+			,(select value from domain where domain_id='SEVERITYCOLOR' and key=event.severity) as _color
+		from event
+		<!-- where ci_id in ( ${value} ) -->
+	</select>
+
+</mapper>

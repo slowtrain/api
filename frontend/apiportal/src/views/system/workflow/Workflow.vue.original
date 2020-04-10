@@ -1,0 +1,589 @@
+<template>
+   <div class="animated fadeIn">
+    <b-card>
+      <b-row>
+        <b-col sm="12">
+          <b-row>
+            <b-col sm="2" >
+              <div>
+                <b-button class="move-btn" v-show="(activeTab !== 'list') && listGrid.currentData.hasOwnProperty('id')" v-on:click="moveChk('previous')">
+                  <img src="../../../assets/img/icons/arrow-left@2x.png"/>
+                </b-button>
+                <b-button class="move-btn" v-show="(activeTab !== 'list') && listGrid.currentData.hasOwnProperty('id')" v-on:click="moveChk('next')">
+                  <img src="../../../assets/img/icons/arrow-right@2x.png"/>
+                </b-button>
+              </div>
+            </b-col>
+            <b-col sm='10'>
+              <div class="comm-btn-box" role="group">
+                <b-button variant="primary" class="px-3 sm" v-show="visibleDelete"   v-on:click="del">{{labels.delete}}</b-button>
+                <b-button variant="primary" class="px-3 sm" v-show="visibleSave"     v-on:click="save">{{labels.save}}</b-button>
+                <b-button variant="primary" class="px-3 sm" v-show="visibleAdd"      v-on:click="add">{{labels.new}}</b-button>
+              </div>
+            </b-col>
+          </b-row>
+
+      <el-tabs v-model="activeTab" :before-leave="chgTab">
+        <!-- list -->
+        <el-tab-pane :label="labels.list" name="list">
+          <b-row>
+            <div class='col-md-4'>
+              <div class="search-component sm">
+                <input class="form-control formdata sm" type="text" v-model="listGrid.searchParam" v-on:keyup.enter="enterSearch" :placeholder="labels.search" />
+              </div>
+            </div>
+            <div class='col-md-8' >
+              <div class='d-flex justify-content-end'>
+                <el-button  v-on:click="exportFilter" :title="labels.excelDownload" style="padding: 0; width:40px; height: 40px;">
+                  <img src="../../../assets/img/icons/icon_search_download.png" width="60%" />
+                </el-button>
+              </div>
+            </div>
+          </b-row>
+
+          <b-row>
+            <div class="col">
+              <p class='grid-line'></p>
+              <data-tables layout='table, pagination' :table-props='listGrid.tableProps' :page-size='listGrid.pageProps.pageSize' :data='listGrid.data' :filters='listGrid.filters' :pagination-props='listGrid.pageProps'
+                :current-page.sync='listGrid.pageIndex'
+                v-on:row-click="handleRowClick"
+                v-on:filtered-data="handleFilteredData">
+                <el-table-column prop="wfprocessId"        :label="labels.wfprocessId"        :sortable="true" :width='listGrid.titles[0].width'></el-table-column>
+                <el-table-column prop="revision"  :label="labels.revision"  :sortable="true"                                  ></el-table-column>
+                <el-table-column prop="description"    :label="labels.description"    :sortable="true" :width='listGrid.titles[4].width'></el-table-column>
+                 <el-table-column prop="status"    :label="labels.status"    :sortable="true" :width='listGrid.titles[4].width'></el-table-column>
+                <el-table-column prop="createDt"  :label="labels.createDt"  :sortable="true" :width='listGrid.titles[5].width'>
+                  <template slot-scope="scope">{{dateTime(scope.row.createDt)}}</template>
+                </el-table-column>
+                <!-- <el-table-column prop="createNm"  :label="labels.createId"  :sortable="true" :width='listGrid.titles[6].width'></el-table-column> -->
+              </data-tables>
+            </div>
+          </b-row>
+        </el-tab-pane>
+
+        <!-- detail -->
+        <el-tab-pane :label="labels.detail" name="detail" v-if="(activeTab !== 'list')">
+          <b-row>
+            <div class='col'>
+              <!-- wfprocess_id, revision, description, status, enabled, object_id -->
+              <el-form :model="listGrid.currentData" ref="userForm" label-width="120px" >
+                <div class="form-row mt-2">
+                  <div class="form-group col-md-3" style="padding-right:1%">
+                    <label for="id" >{{labels.id}}<span class="require-mark">*</span></label>
+                    <input type="text" id="id" class="form-control formdata sm" v-model="listGrid.currentData.id"  v-on:change="changeValue(listGrid.currentData)" :disabled="listGrid.currentData.hasOwnProperty('id')" :placeholder="labels.searchData"/>
+                    <!-- <p class="form_some-copy sm error" v-show="!$util.isNull(validMsg.username)" v-text="validMsg.username"></p> -->
+                  </div>
+                  <div class="form-group col-md-3" style="padding-right:1%">
+                    <label for="wfprocessId">{{labels.firstname}}<span class="require-mark">*</span></label>
+                    <input type="text" id="wfprocessId" class="form-control formdata sm" v-model="listGrid.currentData.wfprocessId"  v-on:change="changeValue(listGrid.currentData)" :placeholder="labels.searchData"/>
+                    <!-- <p class="form_some-copy sm error" v-show="!$util.isNull(validMsg.wfprocessId)" v-text="validMsg.wfprocessId"></p> -->
+                  </div>
+                    <div class="form-group col-md-6" style="padding-right:1%">
+                    <label for="description">{{labels.description}}<span class="require-mark">*</span></label>
+                    <input type="text" id="description" class="form-control formdata sm" v-model="listGrid.currentData.description"  v-on:change="changeValue(listGrid.currentData)" maxlength="11"/>
+                  </div>
+                </div>
+                <div class="form-row mt-2">
+                  <!--
+                  <div class="form-group col-md-3" style="padding-right:1%">
+                    <label>{{labels.objectId}}<span class="require-mark">*</span></label>
+                    <el-select v-model="listGrid.currentData.objectId" style="width:100%" :placeholder="labels.selectData" v-on:change="changeValue(listGrid.currentData)">
+                      <el-option v-for="item in orgSelect" :prop="item.objectId" :value="org.objectId" :key="item.objectId">
+                        {{org.orgId}}
+                      </el-option>
+                    </el-select>
+                  </div>
+                  <div class="form-group col-md-3" style="padding-right:1%">
+                    <label>{{labels.status}}<span class="require-mark">*</span></label>
+                    <el-select id="status" v-model="listGrid.currentData.status" style="width:100%" v-on:change="changeValue(listGrid.currentData)">
+                      <el-option v-for="status in userStatusSelect" :prop="status.value" :value="status.value" :key="status.key">
+                        {{ status.value }}
+                      </el-option>
+                    </el-select>
+                  </div>
+                  <div class="form-group col-md-3" style="padding-right:1%">
+                    <label>{{labels.enabled}}<span class="require-mark">*</span></label>
+                    <el-select id="enabled" v-model="listGrid.currentData.lang" style="width:100%" :placeholder="labels.selectData" v-on:change="changeValue(listGrid.currentData)">
+                      <el-option v-for="item in langSelect" :prop="item.value" :value="item.value" :key="item.key">
+                        {{ item.value }}
+                      </el-option>
+                    </el-select>
+                  </div>
+                  <div class="form-group col-md-3" style="padding-right:1%">
+                    <label for="enabled" >{{labels.enabled}}</label>
+                    <input type="test" id="enabled" class="form-control formdata sm" v-model="listGrid.currentData.userGroup" v-on:change="changeValue(listGrid.currentData)"/>
+                  </div>
+                  -->
+                </div>
+                <div class="form-row mt-2">
+                  <div class='form-group col-md-3' style="padding-right:1%">
+                    <label for="createId">{{labels.createId}}</label>
+                    <input id="createId" class="form-control formdata sm" v-model="listGrid.currentData.createId" placeholder="CREATER" disabled="disabled" />
+                  </div>
+                  <div class='form-group col-md-3' style="padding-right:1%">
+                    <label for="createDt">{{labels.createDt}}</label>
+                    <input id="createDt" class="form-control formdata sm" :value="dateTime(listGrid.currentData.createDt)" placeholder="CREATE DATE" disabled="disabled"/>
+                  </div>
+                  <div class='form-group col-md-3' style="padding-right:1%">
+                    <label for="updateId">{{labels.updateId}}</label>
+                    <input id="updateId" class="form-control formdata sm" v-model="listGrid.currentData.updateId" placeholder="UPDATER" disabled="disabled" />
+                  </div>
+                  <div class='form-group col-md-3' style="padding-right:1%">
+                    <label for="updateDt">{{labels.updateDt}}</label>
+                    <input id="updateDt" class="form-control formdata sm" :value="dateTime(listGrid.currentData.updateDt)" placeholder="UPDATE DATE" disabled="disabled"/>
+                  </div>
+                </div>
+              </el-form>
+            </div>
+          </b-row>
+          <b-row>
+            <el-card class="box-card" >
+              Container
+            </el-card>
+          </b-row>
+        </el-tab-pane>
+      </el-tabs>
+     </b-col>
+    </b-row>
+    </b-card>
+    </div>
+</template>
+
+<script>
+export default {
+  name: 'WORKFLOW',
+  data () {
+    return {
+      labels: {
+        title: '',
+        delete: '',
+        save: '',
+        close: '',
+        new: '',
+        list: '',
+        detail: '',
+        datafilter: '',
+        id: '',
+        username: '',
+        firstname: '',
+        lastname: '',
+        status: '',
+        email: '',
+        mobile: '',
+        description: '',
+        lang: '',
+        authorization: '',
+        authorityId: '',
+        appId: '',
+        datafilterId: '',
+        whereClause: '',
+        searchData: '',
+        selectData: '',
+        usernameMessage: '',
+        saveMessage: '',
+        failMessage: '',
+        userfitlerMessage: '',
+        authMessage: '',
+        deleteMessage: '',
+        newPassword: '',
+        confirmNewPassword: '',
+        lengthMessage: '',
+        pwlengthMessage: '',
+        pwConfirm: '',
+        pwChange: '',
+        useridMessage: '',
+        search: '',
+        excelDownload: '',
+        emailMessage: '',
+        deleteall: '',
+        deleteselected: '',
+        deleteAll: '',
+        deleteSelect: '',
+        mobileTypeMsg: '',
+        firstnameMessage: '',
+        lastnameMessage: '',
+        emailMessageA: '',
+        telMessage: '',
+        multipleAdd: '',
+        authDialogTitle: '',
+        add: '',
+        createId: '',
+        createDt: '',
+        updateId: '',
+        updateDt: '',
+        address: '',
+        option: '',
+        deleteSuccess: '',
+        pwMsg: '',
+        selectNullMsg: '',
+        userGroup: '',
+        chkChgDataMsg: ''
+      },
+      isProcess: false,
+      activeTab: 'list',
+      listGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return ' font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          },
+          cekkStyle: ''
+        },
+        pageProps: {
+          pageSize: 10,
+          pageSizes: [10, 20, 30]
+        },
+        data: [],
+        currentData: {
+        },
+        pageIndex: 1,
+        rowIndex: -1,
+        filters: [{
+          prop: ['wfprocessId', 'description'],
+          value: ''
+        }],
+        filteredData: [],
+        titles: [{
+          prop: 'id',
+          width: '120px'
+        }, {
+          prop: 'orgId',
+          width: '180px'
+        }, {
+          prop: 'username',
+          width: '250px'
+        }, {
+          prop: 'firstname',
+          width: '200px'
+        }, {
+          prop: 'status',
+          width: '200px'
+        }, {
+          prop: 'createDt',
+          width: '250px'
+        }, {
+          prop: 'createId',
+          width: '150px'
+        }],
+        columns: ['id', 'orgId', 'username', 'firstname', 'status', 'createDt', 'createId'],
+        columnNames: ['id', 'orgId', 'username', 'firstname', 'status', 'createDt', 'createId'],
+        searchParam: ''
+      },
+      authorityGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return ' font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          },
+          cekkStyle: ''
+        },
+        data: [],
+        currentData: {
+        },
+        pageProps: {
+          pageSize: 10,
+          pageSizes: [5, 10]
+        },
+        filters: [{
+          prop: [ 'authorityId' ],
+          value: ''
+        }],
+        filteredData: [],
+        columns: [ 'appId', 'authorityId' ],
+        columnNames: [ 'appId', 'authorityId' ],
+        searchParam: ''
+      },
+      filterGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return ' font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          },
+          cekkStyle: ''
+        },
+        data: [],
+        currentData: {
+        },
+        pageProps: {
+          pageSize: 10,
+          pageSizes: [5, 10]
+        },
+        filters: [{
+          prop: ['datafilterId'],
+          value: ''
+        }],
+        filteredData: [],
+        columns: ['datafilterId'],
+        columnNames: ['datafilterId'],
+        searchParam: ''
+      },
+      authSearchGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return 'font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          }
+        },
+        data: [],
+        currentData: {
+        },
+        pageProps: {
+          pageSize: 5,
+          pageSizes: [5, 10, 15]
+        },
+        filters: [{
+          prop: ['appId', 'option', 'description'],
+          value: ''
+        }],
+        filteredData: [],
+        columns: ['appId', 'option', 'description'],
+        columnNames: ['appId', 'option', 'description'],
+        selection: []
+      },
+      passwordChange: {
+        newPw: '',
+        confirmNewPw: ''
+      },
+      userStatusSelect: [],
+      orgSelect: [],
+      langSelect: [],
+      dialogFormVisible: false,
+      email: '',
+      authDialogFlag: false,
+      authorities: {
+        USER_SAVE: false,
+        USER_DELETE: false
+      },
+      validMsg: {
+      }
+    }
+  },
+  computed: {
+    visibleDelete: function () {
+      return this.authorities.USER_DELETE && (this.activeTab !== 'list') && this.listGrid.currentData.hasOwnProperty('id')
+    },
+    visibleSave: function () {
+      return this.authorities.USER_SAVE && (this.activeTab !== 'list')
+    },
+    visibleAdd: function () {
+      return this.authorities.USER_SAVE && (this.activeTab === 'list')
+    }
+  },
+  methods: {
+    initialize: function () {
+      this.$util.setLabels(this.$options.name, this.labels)
+      let authorities = this.$store.getters.getAuth
+      authorities.forEach(authority => {
+        this.authorities[authority.authorityId] = true
+      })
+      let param = {
+        obj: this,
+        paramList: [
+          {dataObj: 'userStatusSelect', domainId: 'USERSTATUS'},
+          {dataObj: 'langSelect', domainId: 'LANG'}
+        ]
+      }
+      this.$util.getComboData(param)
+    },
+    getListData: function () {
+      this.$http.get(
+        '/episode/api/system/workflow'
+      ).then(res => {
+        this.listGrid.data = res.data
+      }).catch(error => {
+        console.log(error)
+      })
+    },
+    changeValue: function (data) {
+      if (data.hasOwnProperty('id')) {
+        data.state = 'CHANGED'
+      } else {
+        data.state = 'ADDED'
+      }
+    },
+    // password ( dialog open / close / save)
+    openDialog: function () {
+      this.dialogFormVisible = true
+      this.passwordChange.confirmNewPw = ''
+      this.passwordChange.newPw = ''
+      this.validMsg.changePw = ''
+      this.validMsg.confrimPw = ''
+    },
+    close: function () {
+      this.dialogFormVisible = false
+    },
+    chgTab: function (activeTab, oldTab) {
+      let rtnFlag = true
+      if (activeTab === 'list') {
+        if (this.listGrid.currentData.state === 'CHANGED' || this.listGrid.currentData.state === 'ADDED') {
+          rtnFlag = false
+          let $this = this
+          this.$util.esconfirm(this, 'check', this.labels.chkChgDataMsg,
+            function () {
+              $this.save()
+            },
+            function () {
+              $this.activeTab = 'list'
+              $this.listGrid.currentData = {}
+              $this.listGrid.searchParam = ''
+            })
+        } else {
+          this.listGrid.searchParam = ''
+          this.listGrid.currentData = {}
+          for (let key in this.validMsg) {
+            this.validMsg[key] = ''
+          }
+        }
+      }
+      return rtnFlag
+    },
+
+    // User ( add / save / delete )
+    add: function () {
+      this.listGrid.currentData = {}
+      this.activeTab = 'detail'
+    },
+    isValidationCheck: function () {
+
+    },
+    save: function () {
+      if (this.isValidationCheck()) {
+        let method = this.listGrid.currentData.hasOwnProperty('id') ? 'PUT' : 'POST'
+        let url = this.listGrid.currentData.hasOwnProperty('id') ? '/episode/api/system/user/' + this.listGrid.currentData.id : '/episode/api/system/user'
+        if (this.listGrid.currentData.state === 'CHANGED' || this.listGrid.currentData.state === 'ADDED') {
+          this.$http({
+            method: method,
+            url: url,
+            data: this.listGrid.currentData
+          }).then(res => {
+            if (method === 'PUT') {
+              this.getRowData(this.listGrid.currentData.id)
+              this.$util.esmessage(this, 'check', this.labels.saveMessage)
+            } else {
+              this.listGrid.currentData = res.data
+              this.listGrid.data.push(res.data)
+              this.getRowData(res.data.id)
+              this.getListData()
+              this.$util.esmessage(this, 'check', this.labels.saveMessage)
+            }
+          }).catch(error => {
+            this.$util.esmessage(this, 'warn', this.labels.failMessage)
+            console.log(error)
+          })
+        }
+      }
+    },
+    del: function () {
+    },
+    // excel download
+    exportFilter: function () {
+      /*
+      let lang = this.$store.getters.getUser.lang
+      let fileName = 'User'
+      let fields = [
+        {value: 'id', label: this.labels.id},
+        {value: 'orgId', label: this.labels.orgId},
+        {value: 'username', label: this.labels.username},
+        {value: 'firstname', label: this.labels.firstname},
+        {value: 'status', label: this.labels.status},
+        {value: 'createDt', label: this.labels.createDt},
+        {value: 'createNm', label: this.labels.createId}
+      ]
+
+      if (lang === 'ko-kr') {
+        fileName = this.labels.title
+      }
+      this.$util.csvExport(this.listGrid.filteredData, fields, this.listGrid.columnNames, fileName)
+      */
+    },
+    // ++
+    handleRowClick: function (row, column, event) {
+      this.activeTab = 'detail'
+      this.listGrid.rowIndex = this.listGrid.filteredData.indexOf(row)
+      this.getRowData(row.id)
+    },
+    getRowData: function (id) {
+      this.$http.get('/episode/api/system/workflow/' + id).then(res => {
+        this.listGrid.currentData = res.data
+      }).catch(error => {
+        console.log(error)
+      })
+    },
+    dateTime: function (date) {
+      return this.$util.dateTimeWithTimeZone(date)
+    },
+    handleAuthSelectionChange: function (val) {
+      this.authSearchGrid.selection = val
+    },
+    handleFilteredData (filteredData) {
+      this.listGrid.filteredData = filteredData
+    },
+    enterSearch: function () {
+      this.listGrid.filters[0].value = this.listGrid.searchParam
+    },
+    authSearch: function () {
+      this.authorityGrid.filters[0].value = this.authorityGrid.searchParam
+    },
+    filterSearch: function () {
+      this.filterGrid.filters[0].value = this.filterGrid.searchParam
+    },
+    moveChk: function (moveStr) {
+      if (this.listGrid.currentData.state === 'CHANGED') {
+        let $this = this
+        this.$util.esconfirm(this, 'check', this.labels.chkChgDataMsg,
+          function () {
+            $this.save()
+          },
+          function () {
+            $this.movePage(moveStr)
+          })
+      } else {
+        this.movePage(moveStr)
+      }
+    },
+    movePage: function (moveStr) {
+      for (let key in this.validMsg) {
+        this.validMsg[key] = ''
+      }
+      let oldRowIndex = this.listGrid.rowIndex
+      let oldPageIndex = this.listGrid.pageIndex
+      if (moveStr === 'previous') {
+        this.listGrid.rowIndex = this.listGrid.rowIndex - 1
+      } else {
+        this.listGrid.rowIndex = this.listGrid.rowIndex + 1
+      }
+      let gridRowIndex = this.listGrid.rowIndex - (this.listGrid.pageProps.pageSize * (this.listGrid.pageIndex - 1))
+      if (gridRowIndex < 0) {
+        this.listGrid.pageIndex = this.listGrid.pageIndex - 1
+      } else if (this.listGrid.pageProps.pageSize - 1 < gridRowIndex) {
+        this.listGrid.pageIndex = this.listGrid.pageIndex + 1
+      }
+      let data = this.listGrid.filteredData
+      if (this.listGrid.pageIndex === 0 || (data.length - 1 < this.listGrid.rowIndex)) {
+        this.listGrid.rowIndex = oldRowIndex
+        this.listGrid.pageIndex = oldPageIndex
+      }
+      this.getRowData(data[this.listGrid.rowIndex].id)
+    }
+  },
+  mounted: function () {
+    this.initialize()
+    this.getListData()
+  }
+}
+
+</script>
+
+<style>
+  .box-card {
+    margin-top: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    width: 100%;
+    height: 400px;
+  }
+</style>

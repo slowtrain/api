@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.event.EventMapper">
+<!--
+SQL File Name : event-mapper.xml
+Description : 이벤트
+수정일     수정자  수정내용
+====       =====  ================
+2019.08.16 이정호  최초 생성
+-->
+
+	<select id="list"  resultType="Event" parameterType="map">
+		
+		select  *
+		from	event
+		where 	1=1
+        order by create_dt desc 
+
+	</select>
+
+	<select id="eventhisList"  resultType="Event" parameterType="map">
+
+		select  eh.*
+			,	c.classstructure_id as "classstructureId"
+			,	getclassnm_fn(c.org_id, c.classstructure_id) as classstructure_nm	
+			,	c.ciname 
+			,	c.extaln17
+			,	c.id as "idCi"
+		from	eventhis eh
+			,	ci c
+		where 	eh.ci_id = c.ci_id
+		
+		<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+		and		eh.origin_dt  <![CDATA[ >= ]]>  date_trunc('day', #{startDate}::timestamp::timestamp ) 
+		and 	eh.origin_dt  <![CDATA[ < ]]>   date_trunc('day', #{endDate}::timestamp::timestamp  + interval  '1 day' ) 
+		</if>
+	
+		<if test='searchParam != null and searchParam != ""'>
+		and		(
+						eh.ci_id 		like '%' || upper(#{searchParam}) || '%'
+					or	upper(c.ciname) like '%' || upper(#{searchParam}) || '%'		
+					or	c.extaln17 		like '%' || upper(#{searchParam}) || '%'		
+					or	eh.message 		like '%' || #{searchParam} || '%'
+					or	c.classstructure_id like '%' || upper(#{searchParam}) || '%'
+					or	c.classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{searchParam}) || '%'
+												)		
+				)	
+		</if>
+
+		<if test='searchCiId != null and searchCiId != ""'>
+		and		eh.ci_id like '%' || upper(#{searchCiId}) || '%'	
+		</if>
+		
+		<if test='searchCiname != null and searchCiname != ""'>
+		and		upper(c.ciname) like '%' || upper(#{searchCiname}) || '%'	
+		</if>
+
+		<if test='searchExtaln17 != null and searchExtaln17 != ""'>
+		and		c.extaln17 like '%' || upper(#{searchExtaln17}) || '%'	
+		</if>
+
+		<if test='searchMessage != null and searchMessage != ""'>
+		and		eh.message like '%' || #{searchMessage} || '%'	
+		</if>
+
+		<if test='status != null and status != ""'>
+			<if test='status.equals("OPEN")'>
+		and		exists  (
+							select  1 
+							from 	event e
+							where 	eh.datasrckeyint = e.datasrckeyint
+							and 	eh.origin_dt = e.origin_dt
+						)
+			</if>
+			<if test='status.equals("CLOSE")'>
+		and	not exists  (
+							select  1 
+							from 	event e
+							where 	eh.datasrckeyint = e.datasrckeyint
+							and 	eh.origin_dt = e.origin_dt
+						)
+			</if>
+		</if>
+
+		<if test='ciType != null and ciType != ""'>
+		and		evtresource in 
+				<foreach item="item" collection="ciTypeArr" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+
+		<if test='severity != null and severity != ""'>
+		and 	eh.severity in 
+				<foreach item="item" collection="severityArr" open="(" separator="," close=")">
+			 	#{item}
+			 	</foreach>
+		</if>
+		
+		<if test='orderBy != null and orderBy != ""'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+
+	</select>
+
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+
+		select	count(eh.*) as cnt
+		from	eventhis eh
+			,	ci c
+		where	eh.ci_id = c.ci_id
+		
+		<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+		and		eh.origin_dt  <![CDATA[ >= ]]>  date_trunc('day', #{startDate}::timestamp::timestamp ) 
+		and 	eh.origin_dt  <![CDATA[ < ]]>   date_trunc('day', #{endDate}::timestamp::timestamp  + interval  '1 day' ) 
+		</if>
+     	
+		<if test='searchParam != null and searchParam != ""'>
+		and		(
+						eh.ci_id	 like '%' || upper(#{searchParam}) || '%'
+					or	c.ciname	 like '%' || #{searchParam} || '%'		
+					or	c.extaln17 	 like '%' || upper(#{searchParam}) || '%'		
+					or	eh.message   like '%' || #{searchParam} || '%'
+					or	c.classstructure_id like '%' || upper(#{searchParam}) || '%'
+					or	c.classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{searchParam}) || '%'
+												)	
+				)		
+		</if>
+
+		<if test='searchCiId != null and searchCiId != ""'>
+		and		eh.ci_id like '%' || upper(#{searchCiId}) || '%'	
+		</if>
+
+		<if test='searchCiname != null and searchCiname != ""'>
+		and		upper(c.ciname) like '%' || upper(#{searchCiname}) || '%'	
+		</if>
+
+		<if test='searchExtaln17 != null and searchExtaln17 != ""'>
+		and		c.extaln17 like '%' || upper(#{searchExtaln17}) || '%'	
+		</if>
+
+		<if test='searchMessage != null and searchMessage != ""'>
+		and		eh.message like '%' || #{searchMessage} || '%'	
+		</if>
+
+		<if test='status != null and status != ""'>
+			<if test='status.equals("OPEN")'>
+		and		exists  (
+							select  1 
+							from 	event e
+							where 	eh.datasrckeyint = e.datasrckeyint
+							and 	eh.origin_dt = e.origin_dt
+						)
+			</if>
+			<if test='status.equals("CLOSE")'>
+		and	not	exists  (
+							select 	1 
+							from 	event e
+							where 	eh.datasrckeyint = e.datasrckeyint
+							and 	eh.origin_dt = e.origin_dt
+						)
+			</if>
+		</if>
+
+		<if test='ciType != null and ciType != ""'>
+		and		evtresource in 
+				<foreach item="item" collection="ciTypeArr" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+		
+		<if test='severity != null and severity != ""'>
+		and 	eh.severity in 
+				<foreach item="item" collection="severityArr" open="(" separator="," close=")">
+			 	#{item}
+			 	</foreach>
+		</if>
+
+		<if test='orderBy != null and orderBy != "" and orderBy == "null"'>
+		order by eh.origin_dt desc
+		</if>
+
+	</select>
+
+
+	<select id="getEventCiIdList"  resultType="map" >
+
+		select  distinct ci_id
+		from 	eventhis
+
+	</select>
+
+
+
+	<select id="getCiEvent"  resultType="Event" parameterType="string">
+
+		select	event.*
+			,	ci.classstructure_id
+			,	getclassnm_fn(ci.org_id, ci.classstructure_id) as classstructure_nm	
+			,	ci.ciname
+			,	ci.extaln17
+			,	ci.id as "idCi"
+		from event inner join ci 
+		on event.ci_id = ci.ci_id
+		where ci.ci_id = #{value}
+		or  event.ci_id in  (select targetci from cirelation where relationname='RUN' and sourceci = #{value})
+		or  event.ci_id in  (select sourceci from cirelation where relationname='RUN' and targetci = #{value})
+		order by origin_dt desc , event.level asc 
+
+		<!-- select	e.*
+			,	c.classstructure_id
+			,	c.ciname
+			,	c.extaln17
+		from	event e
+		, (
+			select * from 
+			ci c
+			where c.ci_id = #{value}
+			or c.ci_id in (
+								select  c1.targetci
+						from 	cirelation c1,
+						ci c2 
+						where c1.targetci = c2.ci_id
+						and  c1.sourceci = #{value}							
+						and relationname = 'RUN'
+						and exists (
+										select 1
+										from classancestor ca
+										where ancestor in ('SW_DBSW', 'SW_MIDDLESW')
+										and c2.classstructure_id = ca.classstructure_id 
+									)
+					)
+			or c.ci_id in (
+						select  c1.sourceci
+						from 	cirelation c1,
+						ci c2 
+						where c1.targetci = c2.ci_id
+						and  c1.targetci = #{value}							
+						and relationname = 'RUN'
+						and exists (
+										select 1
+										from classancestor ca
+										where ancestor in ('SW_DBSW', 'SW_MIDDLESW')
+										and c2.classstructure_id = ca.classstructure_id 
+									)
+					)
+		
+		) c
+		where e.ci_id = c.ci_id
+		order by level -->
+	</select>
+
+	<select id="getTopologyEvent"  resultType="Event" parameterType="string">
+	
+		select	e.*
+			,	c.classstructure_id
+			,	getclassnm_fn(c.org_id, c.classstructure_id) as classstructure_nm	
+			,	c.ciname
+			,	c.extaln17
+			,	c.id as "idCi"
+		from	event e
+			,	ci c
+		where 	e.ci_id = c.ci_id
+		and   	e.ci_id = #{value}	
+		order by level
+	
+	</select>
+
+	<select id="getSystemEvent"  resultType="Event" parameterType="map">
+
+		select  eh.*
+			,	c.classstructure_id
+			,	getclassnm_fn(c.org_id, c.classstructure_id) as classstructure_nm	 
+			,	c.ciname
+			,	c.extaln17
+			,	c.id as "idCi"
+		from	event eh
+			,	ci c
+		where 	eh.ci_id = c.ci_id
+		
+		<if test='ciSystem != null and ciSystem != ""'>
+		and		evtresource = #{ciSystem} 	    
+		</if>
+		and 	eh.severity = #{severity}
+		order by origin_dt desc
+
+	</select>
+
+
+	<select id="getDelayEvent"  resultType="Event" parameterType="map">
+
+		select  eh.*
+			,	c.classstructure_id
+			,	getclassnm_fn(c.org_id, c.classstructure_id) as classstructure_nm
+			,	c.ciname
+			,	c.extaln17
+		from	event eh
+			,	ci c
+		where 	eh.ci_id = c.ci_id
+		and 	origin_dt  <![CDATA[ < ]]>  (#{cTime}::timestamp) - interval '1' day		
+		and 	eh.severity = #{severity}
+		order by origin_dt desc
+
+	</select>
+
+
+	<select id="getBizEvent"  resultType="Event" parameterType="map">
+
+		select e.*
+			,	c.classstructure_id
+			,	getclassnm_fn(c.org_id, c.classstructure_id) as classstructure_nm
+			,	c.ciname
+			,	c.extaln17
+			,	c.id as "idCi"
+			from cirelation c1, event e 
+			,(
+			select c.targetci, t.ci_id, t.ciname, t.classstructure_id
+			from (
+					select * from cirelation c, ci c1
+					where c.sourceci = c1.ci_id
+					) c
+					,(
+						select ci_id, classstructure_id, ciname from ci tb where ci_id = #{bizCiId}
+					) t
+			where c.sourceci = t.ci_id
+			and		c.relationname = 'INCLUDE'
+			and 	exists ( select * from ci where c.targetci = ci_id and classstructure_id != 'BUSINESSSYSTEM')
+			) c2, ci c
+		where c1.sourceci = c2.targetci
+		and	c1.relationname = 'INCLUDE'
+		and c1.targetci = e.ci_id
+		and c.ci_id = e.ci_id
+		<if test='severity != null and severity != ""'>
+		and e.severity = #{severity}
+		</if>
+
+	</select>
+
+	<select id="getBizEventData"  resultType="map" parameterType="map">
+
+		select b.key as "severity"
+			,  coalesce(a.cnt, 0) as "cnt"
+		from 
+		(select  e.severity as "severity"
+			,	count(*) as "cnt"
+			from cirelation c1, event e
+			,(
+			select c.targetci, t.ci_id, t.ciname
+			from (
+					select * from cirelation c, ci c1
+					where c.sourceci = c1.ci_id
+					) c
+					,(
+						select ci_id, classstructure_id, ciname from ci tb where exists (select * from	classancestor where	ancestor = 'BUSINESSSYSTEM'	and tb.classstructure_id = classstructure_id )
+					) t
+			where c.sourceci = t.ci_id
+			and		c.relationname = 'INCLUDE'
+			and 	exists ( select * from ci where c.targetci = ci_id and classstructure_id != 'BUSINESSSYSTEM')
+			) c2
+		where c1.sourceci = c2.targetci
+		and	c1.relationname = 'INCLUDE'
+		and c1.targetci = e.ci_id
+		group by e.severity 
+		) a
+		full outer join
+		(
+		select key from domain
+		where domain_id = 'SEVERITY'
+		order by seq
+		) b
+		on (a.severity = b.key)
+
+	</select>
+
+
+	<select id="getBizCiEventData"  resultType="map" parameterType="map">
+
+		select b.key as "severity"
+			,  coalesce(a.cnt, 0) as "cnt"
+			,  coalesce(a.ci_id, #{bizCiId}) as "ciId" 
+		from 
+		(select  e.severity as "severity"
+			,	count(*) as "cnt"
+			,	c2.ci_id
+			from cirelation c1, event e
+			,(
+			select c.targetci, t.ci_id, t.ciname
+			from (
+					select * from cirelation c, ci c1
+					where c.sourceci = c1.ci_id
+					) c
+					,(
+						select ci_id, classstructure_id, ciname from ci tb where ci_id = #{bizCiId}
+					) t
+			where c.sourceci = t.ci_id
+			and		c.relationname = 'INCLUDE'
+			and 	exists ( select * from ci where c.targetci = ci_id and classstructure_id != 'BUSINESSSYSTEM')
+			) c2
+		where c1.sourceci = c2.targetci
+		and	c1.relationname = 'INCLUDE'
+		and c1.targetci = e.ci_id
+		group by e.severity, c2.ci_id
+		) a
+		full outer join
+		(
+		select key from domain
+		where domain_id = 'SEVERITY'
+		order by seq
+		) b
+		on (a.severity = b.key)
+
+	</select>
+
+
+	<select id="getEventList"  resultType="Event" parameterType="map">
+
+		select  event.*
+			,	ci.classstructure_id
+			,	getclassnm_fn(ci.org_id, ci.classstructure_id) as classstructure_nm
+			,	ci.ciname
+			,	ci.extaln17
+			,	ci.id as "idCi"
+		from 	event inner join ci 
+		on event.ci_id = ci.ci_id
+		where exists (select 1 from userci where ci_id=event.ci_id and username=#{userId})
+		or  event.ci_id in  (select targetci from cirelation where relationname='RUN' and sourceci in (select ci_id from userci where username=#{userId}))
+		or  event.ci_id in  (select sourceci from cirelation where relationname='RUN' and targetci in (select ci_id from userci where username=#{userId}))
+		or  event.ci_id in  (select  c1.targetci
+							 from cirelation c1
+							 	, (select c.targetci, t.ci_id, t.ciname
+								   from  (select * from cirelation c, ci c1 where c.sourceci = c1.ci_id) c
+										,(select ci_id, classstructure_id, ciname
+										  from ci tb where exists (select ci_id from userci where username=#{userId} and tb.ci_id = ci_id)) t
+								  where c.sourceci = t.ci_id
+								  and   c.relationname = 'INCLUDE'
+								  and 	exists ( select * from ci where c.targetci = ci_id and classstructure_id != 'BUSINESSSYSTEM')
+								) c2
+							where c1.sourceci = c2.targetci
+							and	c1.relationname = 'INCLUDE'
+							)
+		or  event.ci_id in (select c.targetci
+								   from  (select * from cirelation c, ci c1 where c.sourceci = c1.ci_id) c
+										,(select ci_id, classstructure_id, ciname
+										  from ci tb where exists (select ci_id from userci where username=#{userId} and tb.ci_id = ci_id)) t
+								  where c.sourceci = t.ci_id
+								  and   c.relationname = 'INCLUDE'
+								  and 	exists ( select * from ci where c.targetci = ci_id and classstructure_id != 'BUSINESSSYSTEM')
+							)
+		order by origin_dt desc , event.level asc 
+
+		<!-- select  event.*
+			,	ci.classstructure_id
+			,	ci.ciname
+			,	ci.extaln17
+			,	ci.id as "idCi"
+		from 	event inner join ci 
+		on event.ci_id = ci.ci_id
+		where exists (select 1 from userci where ci_id=event.ci_id and username=#{userId})
+		or  event.ci_id in  (select targetci from cirelation where relationname='RUN' and sourceci in (select ci_id from userci where username=#{userId}))
+		or  event.ci_id in  (select sourceci from cirelation where relationname='RUN' and targetci in (select ci_id from userci where username=#{userId}))
+		order by origin_dt desc , event.level asc  -->
+
+	</select>
+
+	
+
+
+	<select id="getEventCount"  resultType="map" parameterType="map">
+
+		select  severity
+			,	count(*)
+		from 	event 
+		where 	evtresource = #{resource}
+		group by severity
+
+	</select>
+
+
+	<select id="getEventData"  resultType="map" parameterType="string">
+
+		select  coalesce(sum(mm),0) "previousmonth"
+		   	,	coalesce(sum(yy),0) "previousday"
+		   	,	coalesce(sum(tt),0) "day"
+		from 	(
+					select  1 mm
+					    ,	(case when to_char(origin_dt,'yyyy-MM-dd') = to_char((#{cTime}::timestamp) - interval '1' day, 'yyyy-MM-dd') then 1 else 0 end) yy
+					    ,	(case when to_char(origin_dt,'yyyy-MM-dd') = to_char((#{cTime}::timestamp), 'yyyy-MM-dd') then 1 else 0 end) tt
+					from 	eventhis
+					where   evtresource = #{resource}
+					and severity != 'Normal'
+					and origin_dt <![CDATA[ >= ]]> (#{cTime}::timestamp) - interval '7' day 
+				) a
+
+	</select>
+
+	<select id="getDelayEventCount"  resultType="map" parameterType="string">
+
+		select  severity
+			,	count(*)
+		from 	event 
+		where 	origin_dt  <![CDATA[ < ]]>  #{delay}::timestamp
+		group by  severity
+
+	</select>
+
+
+	<select id="getDelayEventData"  resultType="map" parameterType="string">
+
+		select  coalesce(sum(ym),0) "previousmonth"
+		   	,	coalesce(sum(mm),0) "previousday"
+		   	,	coalesce(sum(yy),0) "day"
+		from 	(
+				  select  (case when to_char(origin_dt,'yyyy-MM') = to_char((#{cTime}::timestamp) - interval '1' month, 'yyyy-MM') then 1 else 0 end) ym
+					  ,	  (case when to_char(origin_dt,'yyyy-MM') = to_char((#{cTime}::timestamp), 'yyyy-MM') then 1 else 0 end) mm
+					  ,	  (case when to_char(origin_dt,'yyyy-MM-dd') = to_char((#{cTime}::timestamp) - interval '1' day, 'yyyy-MM-dd') then 1 else 0 end) yy
+				  from 	  event  
+				  where   exists (
+									select  1
+									from 	ci
+									where 	org_id = 'KAI'
+									and 	ci_id = event.ci_id
+								 )
+				  and severity !='Normal'
+				  and origin_dt  <![CDATA[ < ]]>   (#{cTime}::timestamp) - interval '1' day
+				  and origin_dt  <![CDATA[ >= ]]>  date_trunc('month',(#{cTime}::timestamp) - interval '1' month)
+				) a
+
+	</select>
+
+	<select id="getBusinessEventCount"  resultType="map" >
+
+		select 	c2.ci_id as "ciId"
+			, 	c2.ciname as "ciname"
+			,	count(*) as "cnt"
+		from 	cirelation c1
+			, 	event e
+			,	(select  c.targetci
+					 , 	 t.ci_id
+					 , 	 t.ciname
+				 from 	(
+							select * from cirelation c, ci c1 where c.sourceci = c1.ci_id
+						) c
+					,	(
+							select ci_id, classstructure_id, ciname from ci tb where exists (select * from	classancestor where	ancestor = 'BUSINESSSYSTEM'	and tb.classstructure_id = classstructure_id )
+						) t
+				where 	c.sourceci = t.ci_id
+				and		c.relationname = 'INCLUDE'
+				and 	exists ( select * from ci where c.targetci = ci_id and classstructure_id != 'BUSINESSSYSTEM')
+				) c2
+		where 	c1.sourceci = c2.targetci
+		and		c1.relationname = 'INCLUDE'
+		and 	c1.targetci = e.ci_id
+		group by c2.ci_id, c2.ciname
+
+		<!-- select  severity
+			,	count(*)
+		from 	event 
+		where 	evtresource = 'BUSINESSSYSTEM'
+		group by severity -->
+
+	</select>
+
+	<select id="getBusinessEventData"  resultType="map" >
+
+		select  0 as "previousmonth"
+		   	,	0 as "previousday"
+		   	,	0 as "day"
+
+	</select>
+
+</mapper>

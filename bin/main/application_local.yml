@@ -1,0 +1,188 @@
+system:
+  app-name: Episode
+  app-version: 1.0
+  app-build: 2019-03-14
+  app-desc: KAI ITSM
+  client-name: KAI
+  encoding: UTF-8
+  db-type: Postgresql
+  #domain: icam.koreaaero.com
+  domain: icamlocal.koreaaero.com
+  admin:
+    email:  odolmania@koreaaero.com 
+  attachment:
+    allow-extension: gif,jpg,jpeg,png,txt,xls,xlsx,ppt,pptx,docx,csv
+    # root: C:/Project/episode/attachment/ 
+    root: /app/episode/attachment/
+  pattern:
+    pw: ^(?=.*[A-Za-z])(?=.*\d)(?=.*[`~!@#$%^&*|\\'";:/?])[A-Za-z\d`~!@#$%^&*|\\'";:/?]{9,20}$
+    same : .*(.)\1\1.* 
+log:
+  request: true
+  uri: true
+  params: true
+  controller: true
+  sql: true
+  view: true
+  elapsed: true
+  web: true
+  skip-urls:
+    - /base/login/*
+  skip-params:
+    - node
+    - loginPwd
+paging:
+  rowPerPage: 10
+  pagePerBlock: 10
+login:
+  use-log: true
+  use-limit: true
+  limit-cnt: 10
+  use-multi: false
+  multi-expired: true
+  admin-access-ip:
+    - 127.0.0.1
+    - 192.168.0.*
+    - 192.168.10.1*
+api:
+  facebook:
+    app-id: 350238382126673
+    app-secret: d3c1141f47c9bd7819623907eb58ae26
+  naver:
+    client-id: bX9orLqw2wjRxK3vDhUi
+    client-secret: cS0vMTHBYN
+  token:
+    access:
+      token:
+        period: 3600
+
+server:
+  port: 8080
+  servlet:
+    context-path: /episode
+#  error:
+#    path: /common/exception/GLOBAL_EXCEPTION
+
+# 기본 환경 선택
+spring:
+  devtools:
+    restart:
+      additional-paths: /resources/static
+#      execlude:
+    livereload:
+      enabled: true
+  main: 
+    allow-bean-definition-overriding: true
+  jackson:
+    serialization:
+        INDENT_OUTPUT: true
+  #h2:
+  #  console:
+  #    enabled: true
+
+# Database
+  datasource:
+    #driver-class-name: org.postgresql.Driver
+    #url: jdbc:postgresql://192.168.0.55:5432/episode
+    #username: episode
+    #password: episode
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      # jdbc-url: jdbc:postgresql://166.103.180.185:5432/episode
+      jdbc-url: jdbc:postgresql://166.103.180.187:5432/episode
+      username: episode
+      password: episode1!
+      driver-class-name: org.postgresql.Driver
+      pool-name: mybatis-pool
+      maximum-pool-size: 30
+      minimum-idle: 5
+    jpa:
+      # jdbc-url: jdbc:postgresql://166.103.180.185:5432/episode
+      jdbc-url: jdbc:postgresql://166.103.180.187:5432/episode
+      username: episode
+      password: episode1!
+      driver-class-name: org.postgresql.Driver
+      pool-name: jpa-pool
+      maximum-pool-size: 30
+      minimum-idle: 5
+
+      
+# JPA properties
+  jpa:
+    hibernate:
+      use-new-id-generator-mappings: true 
+      ddl-auto: none
+    show-sql: true
+    database: postgresql
+    #database-platform: org.hibernate.dialect.PostgreSQLDialect
+    #database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    generate-ddl: false 
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+      jdbc:
+        time_zone: UTC
+        temp: 
+          use_jdbc_metadata_defaults: false
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    always-use-message-format: true    
+  cache:
+    cache-names:
+      - codeCache
+      - menuCache
+      - bbsCache
+    type: ehcache
+    ehcache:
+      config:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+  application:
+    name: ${system.app-name}
+  mail:
+    host: 123.123.123.13
+    port: 245
+    username: tester
+    password: tester
+  security:
+    filter:
+      dispatcher-types:
+        - request
+        - error
+    user:
+      name: user
+      password: test
+pebble:
+  suffix: .html
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.itmsg.portal.mapper: TRACE
+    com.itmsg.episode.security.auth: TRACE
+skype:
+  integration:
+    sendor: system
+    test: http://19chatmsgprod.koreaaero.com/API/test.html
+    url: http://19chatmsgprod.koreaaero.com/API/SendSystemMessage.aspx
+jwt:
+  header: ESAuth
+  secret: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr5ui+5AA8v1LivSYNGdZ0O76SBgktU3CjG+BcUb0mJ1fl34+So75bRI3/+n8AJP//Xp3OS62niQyRB5LEdCr7ox5RAQlLHFkkJHQysi2/236Br8ZDiM1AfT4Hz5AQ9D4Pk5H/n6stKuS2ZffHAWAW7/qK7PC6z4ncSlhVYr/zXNj7HVx9YFP7gZx6faaar6UvV96vX8W4xcITxvLpaCBnF9TeOUxLHYI3tmnxmE8gRQXpdCH7X3IB3f4QfVCMIIrSD8d3si5w5VArlEMRQ9ITEOA0Iq8VJKGjlu+haycTgIPJD3yGhU7Zb3EQfBZvQGC31beogycEf9imnvHDW4NvQIDAQAB
+  expiration: 1800
+  route:
+    authentication:
+      path: /episode/api/authentication/signin
+      refresh: /episode/api/authentication/refresh
+      signout: /episode/api/authentication/signout
+      user: /episode/api/authentication/user
+sap:
+  integration:
+    username: ICAMIFUSER
+    password: Pidev!17

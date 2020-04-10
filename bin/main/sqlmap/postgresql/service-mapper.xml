@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : service-mapper.xml
+Description : 서비스
+수정일     수정자  수정내용
+====       =====  ================
+2019.11.04 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.servicemgmnt.service.ServiceMapper">
+
+	<sql id="includeSql">
+		select	1 as chk
+		<if test="srchtype != 'count'">
+			,	tb.* 
+			,	getusername_fn(tb.manager_id) as manager_nm
+			,	getusername_fn(tb.create_id) as create_nm
+			,	getusername_fn(tb.update_id) as update_nm
+			,	(
+					select	tb2.hierarchypath||'/' as hierarchypath
+					from	classstructure tb2
+					where	tb2.org_id = tb.org_id
+        			and     tb2.classstructure_id = tb.classstructure_id
+				) as hierarchypath
+			,	getclassnm_fn(tb.org_id, tb.classstructure_id) as classstructure_nm
+		</if>
+		from 	ci tb
+		where 	1=1
+		<if test='object != null and object != ""'>
+		and		exists		(
+								select 	1
+								from	classusewith tb1
+								where	tb1.org_id = tb.org_id
+								and		tb1.classstructure_id = tb.classstructure_id
+								and		tb1.object = #{object}
+							)		
+		</if>							
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='orgId != null and orgId != ""'>
+		and		org_id = #{orgId}
+		</if>
+		<if test='ciId != null and ciId != ""'>
+		and		upper(ci_id) like '%' || upper(#{ciId}) || '%'
+		</if>
+		<if test='classstructure != null and classstructure != ""'>
+		and		classstructure_id = #{classstructure}
+		<!-- and		(
+						classstructure_id like '%' || upper(#{classstructure}) || '%'		
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	description like '%' || #{classstructure} || '%'
+												)		
+				)								 -->
+		</if>
+		<if test='ciname != null and ciname != ""'>
+		and		upper(ciname) like '%' || upper(#{ciname}) || '%'
+		</if>
+		<if test='description != null and description != ""'>
+		and		upper(description) like '%' || upper(#{description}) || '%'
+		</if>
+		<if test='itsmciid != null and itsmciid != ""'>
+		and		extaln18 like '%' || upper(#{itsmciid}) || '%'
+		</if>
+		<if test='status != null and status != ""'>
+		and		status = #{status}
+		</if>
+		<if test='treeSearchParam != null and treeSearchParam != "" and treeSearchParam != "null"'>
+			<if test='treeSearchParam != null and treeSearchParam != "" and treeSearchParam != "E2E"'>
+		and		classstructure_id in( 
+										select	classstructure_id
+										from	classancestor	
+										where	ancestor = #{treeSearchParam}
+									)
+			</if>
+			<if test='treeSearchParam != null and treeSearchParam != "" and treeSearchParam == "E2E"'>
+		and		classstructure_id = 'GROUP_1'
+     	and 	extbool5 = 'true'
+			</if>												
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						ci_id like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id like '%' || upper(#{searchParam}) || '%'		
+					or	upper(ciname) like '%' || upper(#{searchParam}) || '%'		
+					or	description like '%' || #{searchParam} || '%'
+					or	extaln17 like '%' || #{searchParam} || '%'
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	description like '%' || #{searchParam} || '%'
+												)		
+				)	
+		</if>
+		<if test='ciDialogType != null and ciDialogType != "" and ciDialogType == "relation"'>
+		and 	not exists	(
+								select 	1
+								from 	cirelation tb1
+								where	1=1
+								and		tb1.org_id = tb.org_id	
+								and		tb1.targetci = tb.ci_id
+								and		tb1.org_id = #{orgId}
+								and  	tb1.sourceci = #{ciDialogParam}
+							)
+		and 	not exists	(
+								select 	1
+								from 	cirelation tb1
+								where	1=1
+								and		tb1.org_id = tb.org_id	
+								and		tb1.sourceci = tb.ci_id
+								and		tb1.org_id = #{orgId}
+								and  	tb1.targetci = #{ciDialogParam}
+							)					
+		and 	ci_id != 	#{ciDialogParam}	
+		and		status = 'ACTIVE'	
+		</if>
+
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id desc
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="CI" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<select id="relationList"  resultType="CIrelation" parameterType="map">
+		select  #{ciId} as ciId
+			,	tb3.*
+			,	tb1.id as sourceci_id
+			,	tb2.id as targetci_id
+			,	tb1.ciname as sourceci_nm
+			,	tb2.ciname as targetci_nm
+			,	getclassnm_fn(tb1.org_id, tb1.classstructure_id) as sourceclass
+			,	getclassnm_fn(tb2.org_id, tb2.classstructure_id) as targetclass
+			,	getusername_fn(tb1.manager_id) as source_manager_nm
+			,	getusername_fn(tb2.manager_id) as target_manager_nm
+		from    ci tb1
+			,	ci tb2
+			,   cirelation tb3
+			,	classusewith tb4
+		where   tb1.org_id = tb3.org_id
+		and 	tb1.ci_id = tb3.sourceci
+		and		tb2.org_id = tb3.org_id
+		and 	tb2.ci_id = tb3.targetci
+		and     (
+					(		
+								tb3.org_id = #{orgId}
+						and     tb3.sourceci = #{ciId}
+						and		tb4.org_id = tb2.org_id
+						and		tb4.classstructure_id = tb2.classstructure_id
+						and		tb4.object = #{type}
+					)
+					or
+					(
+								tb3.org_id = #{orgId}
+						and     tb3.targetci = #{ciId}
+						and		tb4.org_id = tb1.org_id
+						and		tb4.classstructure_id = tb1.classstructure_id
+						and		tb4.object = #{type}
+					)	
+				)
+		order by tb3.update_dt desc	
+	</select>  
+</mapper>

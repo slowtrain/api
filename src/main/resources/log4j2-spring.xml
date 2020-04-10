@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Async Loggers will auto-flush in batches, so switch off immediateFlush. -->
+        <RandomAccessFile name="RandomAccessFile" fileName="episode.log" immediateFlush="false" append="false">
+            <PatternLayout>
+                <Pattern>%d %p %class{1.} [%t] %location %m %ex%n</Pattern>
+            </PatternLayout>
+        </RandomAccessFile>
+    </Appenders>
+    <Loggers>
+        <!-- pattern layout actually uses location, so we need to include it -->
+        <AsyncLogger name="com.itmsg" level="debug" includeLocation="true">
+            <AppenderRef ref="RandomAccessFile"/>
+        </AsyncLogger>
+        <Root level="info" includeLocation="true">
+            <AppenderRef ref="RandomAccessFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : disci-mapper.xml
+Description : DISCI
+수정일     수정자  수정내용
+====       =====  ================
+2019.10.21 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.resource.disci.DisCIMapper">
+
+	<sql id="includeSql">
+		select	1 as chk
+			,	tb.* 
+			,	getusername_fn(tb.update_id) as update_nm
+		from 	disci tb
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='disciId != null and disciId != ""'>
+		and		disci_id = #{disciId}
+		</if>
+		<if test='ciId != null and ciId != ""'>
+		and		ci_id = #{ciId}
+		</if>
+		<if test='disciIdD != null and disciIdD != ""'>
+		and		upper(disci_id) like '%' || upper(#{disciIdD}) || '%'
+		</if>
+		<if test='ciIdD != null and ciIdD != ""'>
+        and		upper(ci_id) like '%' || upper(#{ciIdD}) || '%'
+		</if>
+		<if test='disciclass != null and disciclass != ""'>
+        and		upper(disciclass) like '%' || upper(#{disciclass}) || '%'
+		</if>
+		<if test='disciname != null and disciname != ""'>
+		and		upper(disciname) like '%' || upper(#{disciname}) || '%'
+		</if>
+		<if test='datasrc != null and datasrc != ""'>
+        and		upper(datasrc) like '%' || upper(#{datasrc}) || '%'
+		</if>
+		<if test='discitype != null and discitype != ""'>
+        and		upper(discitype) like '%' || upper(#{discitype}) || '%'
+		</if>
+		<if test='discidescription != null and discidescription != ""'>
+        and		discidescription like '%' || upper(#{discidescription}) || '%'
+		</if>
+		<if test='isdelete != null and isdelete != ""'>
+			<if test='isdelete.equals("FALSE")'>
+			and 	isdelete = 'false'
+			</if>
+			<if test='isdelete.equals("TRUE")'>
+			and 	isdelete = 'true'
+			</if>
+		</if>
+		<if test='matching != null and matching != ""'>
+			<if test='matching.equals("FALSE")'>
+			and 	ci_id is null
+			</if>
+			<if test='matching.equals("TRUE")'>
+			and 	ci_id is not null
+			</if>
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						upper(disci_id) like '%' || upper(#{searchParam}) || '%'
+					or	upper(ci_id) like '%' || upper(#{searchParam}) || '%'
+					or	upper(disciclass) like '%' || upper(#{searchParam}) || '%'
+					or 	upper(disciname) like '%' || upper(#{searchParam}) || '%'		
+					or 	upper(datasrc) like '%' || upper(#{searchParam}) || '%'		
+					or 	upper(discidescription) like '%' || upper(#{searchParam}) || '%'
+				)	
+		</if>		
+		<!-- <if test='discitype != null and discitype != ""'>
+
+		and   	datasrc = 'WATCHALL'
+		and 	isdelete = 'false'
+			<if test='discitype.equals("ComputerSystem") or discitype.equals("NetDevice")'>
+			and	  disigtype = 'COMPSYS'
+			</if>
+			<if test='discitype.equals("WebApplicationServer") or discitype.equals("DatabaseServer")'>
+			and	  disigtype = 'APPLICATION'
+			</if>
+		and	    discitype = #{discitype}
+			<if test='cf.equals("undecided")'>
+			and 	ci_id is null
+			</if>
+			<if test='cf.equals("confirm")'>
+			and 	ci_id is not null
+			</if>
+		</if> -->
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="DisCI" parameterType="map">
+		select 	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<select id="discirelationList"  resultType="DisCIrelation" parameterType="map">
+		select  tb3.*
+            ,   tb1.id as srcdisId
+            ,   tb2.id as tgtdisId
+            ,   tb1.disciname as srcdisciNm
+            ,   tb2.disciname as tgtdisciNm
+            ,   tb1.disciclass as srcdisciclass
+            ,   tb2.disciclass as tgtdisciclass
+        from    disci tb1
+            ,   disci tb2
+            ,   discirelation tb3
+        where   tb1.disci_id = tb3.srcdisci_Id
+        and     tb2.disci_id = tb3.tgtdisci_Id
+        and     (
+                        tb3.srcdisci_Id = #{disciId}
+                    or  tb3.tgtdisci_Id = #{disciId}
+                )
+        order by tb3.id desc 
+	</select>
+
+	<insert id="addCIRelations">
+		insert into episode.cirelation (id, org_id, sourceci, targetci, relationname, status, create_dt, create_id, update_dt, update_id,end_dt,userdefine)
+		select 
+			nextval('cirelation_seq'), 'KAI', sourceci, targetci, relationname, 'ACTIVE', now() at time zone 'utc' , 'intadmin',now() at time zone 'utc', 'intadmin' , '9999-12-31 00:00:00.000',false
+		from (  select  
+					sourceci, targetci, relationname
+				from (
+						select
+							discirelation.relationname
+							,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+							,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+						from discirelation
+				) discirelation_v 
+				where  not exists (select 1 from cirelation where org_id='KAI' and sourceci=discirelation_v.sourceci and targetci=discirelation_v.targetci and relationname=discirelation_v.relationname)
+				and discirelation_v.sourceci is not null
+				and discirelation_v.targetci is not null
+				group by sourceci, targetci, relationname
+		) target
+	</insert>
+
+
+	<insert id="insertCIRelationHisInactive">
+		INSERT INTO episode.cihis (id, org_id, ci_id, chgtype, chgdetail, chgdescription, create_dt, create_id, update_dt, update_id)
+		select 
+			nextval('cihis_seq')
+			,ORG_ID
+			,SOURCECI as ci_id
+			,'RELATION' as chgtype
+			,'Status' as chgdetail
+			,'Status of relation "'||relationname||'" source "'||sourceci||'" target "'||targetci||'" is changed to "INACTIVE"' as chgdescription
+			, now() at time zone 'utc' as create_dt
+			,'intadmin' as create_id
+			, now() at time zone 'utc' as update_dt
+			,'intadmin' as update_id
+		from CIRELATION	
+		where not exists  (select 1 from (
+											select
+												discirelation.relationname
+												,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+												,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+											from discirelation ) discirelation_v
+									where sourceci=cirelation.sourceci and targetci=cirelation.targetci and relationname=cirelation.relationname)
+									
+		and status='ACTIVE'
+		union all
+		select 
+			nextval('cihis_seq')
+			,ORG_ID
+			,targetci as ci_id
+			,'RELATION' as chgtype
+			,'Status' as chgdetail
+			,'Status of relation "'||relationname||'" source "'||sourceci||'" target "'||targetci||'" is changed to "INACTIVE"' as chgdescription
+			, now() at time zone 'utc' as create_dt
+			,'intadmin' as create_id
+			, now() at time zone 'utc' as update_dt
+			,'intadmin' as update_id
+		from CIRELATION	
+		where not exists  (select 1 from (
+											select
+												discirelation.relationname
+												,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+												,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+											from discirelation ) discirelation_v
+									where sourceci=cirelation.sourceci and targetci=cirelation.targetci and relationname=cirelation.relationname)
+									
+		and status='ACTIVE'
+		and userdefine = false
+	</insert>
+
+
+	<update id="updateCIRelationsInactive">
+		update cirelation 
+			set status='INACTIVE' , update_dt = ( now() at time zone 'utc') , end_dt = ( now() at time zone 'utc')
+		where not exists  (select 1 from (
+											select
+												discirelation.relationname
+												,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+												,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+											from discirelation ) discirelation_v
+									where sourceci=cirelation.sourceci and targetci=cirelation.targetci and relationname=cirelation.relationname)
+		and status='ACTIVE'
+		and userdefine = false
+	</update>
+
+
+	<insert id="insertCIRelationHisActive">
+		INSERT INTO episode.cihis (id, org_id, ci_id, chgtype, chgdetail, chgdescription, create_dt, create_id, update_dt, update_id)
+		select 
+			nextval('cihis_seq')
+			,ORG_ID
+			,SOURCECI as ci_id
+			,'RELATION' as chgtype
+			,'Status' as chgdetail
+			,'Status of relation "'||relationname||'" source "'||sourceci||'" target "'||targetci||'" is changed to "ACTIVE"' as chgdescription
+			, now() at time zone 'utc' as create_dt
+			,'intadmin' as create_id
+			, now() at time zone 'utc' as update_dt
+			,'intadmin' as update_id
+		from CIRELATION	
+		where  exists  (select 1 from (
+											select
+												discirelation.relationname
+												,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+												,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+											from discirelation ) discirelation_v
+									where sourceci=cirelation.sourceci and targetci=cirelation.targetci and relationname=cirelation.relationname)
+									
+		and status='INACTIVE'
+		union all
+		select 
+			nextval('cihis_seq')
+			,ORG_ID
+			,targetci as ci_id
+			,'RELATION' as chgtype
+			,'Status' as chgdetail
+			,'Status of relation "'||relationname||'" source "'||sourceci||'" target "'||targetci||'" is changed to "ACTIVE"' as chgdescription
+			, now() at time zone 'utc' as create_dt
+			,'intadmin' as create_id
+			, now() at time zone 'utc' as update_dt
+			,'intadmin' as update_id
+		from CIRELATION	
+		where exists  (select 1 from (
+											select
+												discirelation.relationname
+												,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+												,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+											from discirelation ) discirelation_v
+									where sourceci=cirelation.sourceci and targetci=cirelation.targetci and relationname=cirelation.relationname)
+									
+		and status='INACTIVE'
+	</insert>
+
+	<insert id="insertRPASystem">
+		insert into ci (id, org_id, ci_id, classstructure_id, status, description,   ciname, location_id, create_dt, create_id, update_dt, update_id,extaln1, extbool1, extbool2, extbool3, extbool4, extbool5 ,userdefine, isdelete ) 
+		select 
+			nextval('ci_seq'), 'KAI',getautonum_fn('KAI','ci','ci_id'), 'RPASYSTEM', 'ACTIVE', robotip||'-'||location_id ,robotip||'-'||location_id, location_id, CURRENT_TIMESTAMP, 'intadmin', CURRENT_TIMESTAMP, 'intadmin', robotip,false, false, false, false, false, false, false 
+		from ( select  robotip,location_id from rparespraw group by robotip,location_id ) a
+		where not exists (select 1 from ci where classstructure_id='RPASYSTEM' and extaln1 =a.robotip)
+		and a.robotip is not null and location_id is not null
+	</insert>
+
+	<insert id="insertDisCIMapToCI">
+		insert into discimaptoci
+		select 
+		nextval('discimaptoci_seq'),
+		datasrc,
+		discitype,
+		disciclass,
+		isvirtual,
+		null classstructure_id,
+		'NOTREADY' status,
+		now() create_dt,
+		'intadmin' create_id,
+		now() update_dt,
+		'intadmin' update_id
+		from ( 
+			select 
+			distinct datasrc, discitype, disciclass,isvirtual
+			from disci
+			where not exists (select 1 from discimaptoci where datasrc=disci.datasrc and discitype =disci.discitype and disciclass =disci.disciclass and isvirtual = disci.isvirtual)
+		) d
+	</insert>
+
+	<update id="updateCIRelationsActive">
+		update cirelation 
+			set status='ACTIVE' , update_dt = ( now() at time zone 'utc') , end_dt = '9999-12-31 00:00:00'
+		where  exists  (select 1 from (
+											select
+												discirelation.relationname
+												,(select ci_id from disci where disci_id=discirelation.srcdisci_id) sourceci
+												,(select ci_id from disci where disci_id=discirelation.tgtdisci_id) targetci
+											from discirelation ) discirelation_v
+									where sourceci=cirelation.sourceci and targetci=cirelation.targetci and relationname=cirelation.relationname)
+		and status='INACTIVE'
+	</update>
+
+	<update id="updateCISW" parameterType="DisCI">
+		update cisw 
+			set ci_id= #{ciId}
+		where datasrcpkey1 = #{disciId} 
+	</update>
+
+	<delete id="deleteCISW" parameterType="DisCI">
+		delete from cisw 
+		where datasrcpkey1 = #{disciId} 
+	</delete>
+
+
+	<select id="getPromoteTarget"  resultType="DisCI" parameterType="string">
+		select 
+			disci.* 
+			,m.classstructure_id classstructureId
+		from disci inner join discimaptoci m
+		on  m.datasrc=disci.datasrc and m.discitype=disci.discitype and m.disciclass=disci.disciclass and m.isvirtual=disci.isvirtual
+		where disci.isupdate = true
+		and disci.datasrc = #{value}
+		and m.classstructure_id is not null
+		and m.status='ACTIVE'
+	</select>
+
+	<select id="getDisCIByCIid" resultType="DisCI" parameterType="string" >
+		 select * from disci where ci_id=#{ciId} and datasrc in ('TADDM','BFI')
+	</select>
+
+	<select id="getSameHostAndPromoted" resultType="DisCI" parameterType="DisCI" >
+		select 
+			*
+		from disci 
+		where ci_id is not null
+		and discihostname = #{disciHostname}
+		
+		<if test='disigtype == "COMPSYS"'>
+		and disigtype = #{disigtype}	
+		</if>
+
+		<if test='disigtype != "COMPSYS"'>
+		and disigtype != #{disigtype}	
+		</if>
+
+		<if test='datasrc == "BFI"'>
+		and datasrc = 'TADDM'
+		</if>
+
+		<if test='datasrc == "TADDM"'>
+		and datasrc = 'BFI'
+		</if>
+
+		<if test='datasrc == "WATCHALL"'>
+		and datasrc in ('BFI','TADDM')
+		</if>
+
+
+	</select>
+
+	<select id="emsDisCI" resultType="map" parameterType="String" >
+
+		select	'JOBEMS' as "cf"
+			,	( select  getLabel_fn('ASSETDASHBOARD', #{discitype},'ko-kr') as "title")
+			,	( select  count(*) as "undecided"
+				  from    disci
+				  where   datasrc = 'WATCHALL'
+				  and 	  isdelete = 'false'
+				  <if test='value.equals("ComputerSystem") or value.equals("NetDevice")'>
+				  and 	  disigtype = 'COMPSYS'
+				  </if>
+				  <if test='value.equals("WebApplicationServer") or value.equals("DatabaseServer")'>
+				  and 	  disigtype = 'APPLICATION'
+				  </if>
+				  and 	  discitype = #{discitype}
+				  and 	  ci_id is null
+				),
+				( select  count(*) as "confirm"
+				  from 	  disci
+				  where   datasrc = 'WATCHALL'
+				  and 	  isdelete = 'false'
+				  <if test='value.equals("ComputerSystem") or value.equals("NetDevice")'>
+				  and 	  disigtype = 'COMPSYS'
+				  </if>
+				  <if test='value.equals("WebApplicationServer") or value.equals("DatabaseServer")'>
+				  and 	  disigtype = 'APPLICATION'
+				  </if>
+				  and 	  discitype = #{discitype}
+				  and 	  ci_id is not null
+				  )
+
+
+		<!-- select  getLabel_fn('ASSETDASHBOARD', 'inconsistency','ko-kr') as "ems"
+			,	count(*) as "cnt"
+		from 	disci
+		where 	datasrc = 'WATCHALL'
+		and 	isdelete = 'false'
+		<if test='value.equals("ComputerSystem") or value.equals("NetDevice")'>
+		and 	disigtype = 'COMPSYS'
+		</if>
+		<if test='value.equals("WebApplicationServer") or value.equals("DatabaseServer")'>
+		and 	disigtype = 'APPLICATION'
+		</if>
+		and 	discitype = #{discitype}
+		and 	ci_id is null
+		union all		
+		select  getLabel_fn('ASSETDASHBOARD', 'same','ko-kr') as "ems"
+			,	count(*) as "cnt"
+		from 	disci
+		where 	datasrc = 'WATCHALL'
+		and 	isdelete = 'false'
+		<if test='value.equals("ComputerSystem") or value.equals("NetDevice")'>
+		and 	disigtype = 'COMPSYS'
+		</if>
+		<if test='value.equals("WebApplicationServer") or value.equals("DatabaseServer")'>
+		and 	disigtype = 'APPLICATION'
+		</if>
+		and 	discitype = #{discitype}
+		and 	ci_id is not null -->
+	</select>
+
+
+</mapper>

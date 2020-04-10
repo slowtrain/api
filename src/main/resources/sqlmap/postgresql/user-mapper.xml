@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.user.UserMapper">
+
+	<sql id="includeSql">
+		select	0 as chk
+		   , 	tb.last_name || tb.first_name as userfullname	  
+		   , 	tb.* 
+		   , 	getusername_fn(tb.create_id) as create_nm
+		   , 	getusername_fn(tb.update_id) as update_nm
+		from 	esuser tb
+		where 	1=1
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+					upper(tb.username) like '%' || upper(#{searchParam}) || '%'
+					
+				)	
+		</if>
+		<if test='searchName != null and searchName != "" and searchName != "null"'>
+		and		(
+					tb.first_name = #{searchName} 
+				)	
+		</if>		
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="User" parameterType="map">
+		select 	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<!-- <select id="list"  resultType="User" parameterType="map">
+		select
+			 0 as chk
+		   , tb.last_name || tb.first_name as userfullname	  
+		   , tb.* 
+		   , getusername_fn(tb.create_id) as create_nm
+		   , getusername_fn(tb.update_id) as update_nm
+		from esuser tb
+		where 1=1
+		<if test="username != null and username != ''">
+				and tb.username = #{username}
+		</if>
+
+		<if test="firstname != null and firstname != ''">
+				and tb.first_name = #{firstname}
+		</if>
+
+		<if test="lastname != null and lastname != ''">
+				and tb.last_name = #{lastname}
+		</if>
+
+		<if test="email != null and email != ''">
+				and tb.email = #{email}
+		</if>
+
+		<if test="USERFILTER != null and USERFILTER != ''">
+				and ${USERFILTER}
+		</if>
+	
+	</select> -->
+
+	<select id="getUserRole"  resultType="Role" parameterType="com.itmsg.episode.app.system.user.User">
+				select * from role r
+				where exists ( select 1 from roleuser where r.role_id = role_id and username = #{username})
+	</select>
+
+	<select id="getUserAuthorities"  resultType="UserAuthority" parameterType="com.itmsg.episode.app.system.user.User">
+		select
+		 	#{username} username
+			,app_id appId
+			,authority_id authorityId
+		from roleauth
+		where role_id in (select 
+							role_id 
+							from rolegroup 
+							where  usergroup_id in (select 
+														usergroup_id 
+													from groupuser 
+													where username= #{username} 
+													and exists (select 1 from usergroup where org_id = #{orgId} and status='ACTIVE' and usergroup_id = groupuser.usergroup_id)
+													)											  
+							)
+		or role_id in ( select role_id from roleuser where username = #{username})
+		group by  app_id , authority_id
+	</select>
+
+	<select id="getUserFilter"  resultType="UserFilter" parameterType="map">
+		select 	'${username}' username
+			,	 datafilter_id datafilterId
+			,	 whereclause whereClause
+		from 	 rolefilter
+		where 	(
+					role_id in 	  (
+									select  role_id
+									from 	rolegroup
+									where   usergroup_id in (
+																select  usergroup_id
+																from	groupuser
+																where 	username= #{username}
+															)
+								  )
+					or role_id in (
+									select role_id
+									from   roleuser
+									where username = #{username}
+								  )
+				)
+		
+		<if test="datafilterId != null and datafilterId != ''">
+			and datafilter_id = #{datafilterId}
+		</if>
+	</select>
+
+
+</mapper>

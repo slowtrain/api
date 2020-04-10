@@ -1,0 +1,20 @@
+- root 
+  - dist
+  - node_modules
+  - public
+  - src
+    - assets  : css & images & icon
+    - components 
+    - directive  
+    - layout : screen structure
+    - pages  
+    - router 
+    - shared 
+    - store 
+    - timer 
+    - util
+    - views : published file 일반 컨텐츠 영역 vue 
+    - App.vue 
+    - main.js
+    - package.json  
+      

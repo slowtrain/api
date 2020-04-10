@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.resource.ciswlist.CIswListMapper">
+<!--
+SQL File Name : ciswlist-mapper.xml
+Description : 소프트웨어 목록 조회
+수정일     수정자  수정내용
+====       =====  ================
+2019.08.29 최영훈  최초 생성
+-->
+	<sql id="includeSql">
+		select  getclassnm_fn(tb3.org_id, tb3.classstructure_id) as ci_class
+			,   tb3.ciname as ci_name
+			,   tb3.extaln7 as os_name
+			<!-- ,   getclassnm_fn(tb1.org_id, tb1.classstructure_id) as sw_class -->
+			,   getclassnm_fn(tb1.org_id, (select classstructure_id from swcat where swcat_id = split_part(substring(tb1.hierarchypath,2),'/',1))) as sw_class
+			,   tb1.publishername
+			,   tb1.swcatname
+			,   tb1.swcatversion
+			,   tb3.location_id
+			,   tb2.start_dt
+			,	tb2.id
+		from    swcat tb1
+			,   cisw tb2
+			,   ci tb3
+		where   1=1
+		and		tb1.org_id = tb2.org_id
+		and     tb1.swcat_id = tb2.swcat_id
+		and		tb2.org_id = tb3.org_id
+		and		tb2.ci_id = tb3.ci_id
+		and		to_char(tb2.end_dt, 'YYYY') = '9999'
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='swcatname != null and swcatname != ""'>
+		and		upper(tb1.swcatname) like '%' || upper(#{swcatname}) || '%'
+		</if>
+		<if test='publishername != null and publishername != ""'>
+		and		upper(tb1.publishername) like '%' || upper(#{publishername}) || '%'
+		</if>
+		<if test='swcatversion != null and swcatversion != ""'>
+		and		tb1.swcatversion like '%' || #{swcatversion} || '%'
+		</if>
+		<if test='ciName != null and ciName != ""'>
+		and		upper(tb3.ciname) like '%' || upper(#{ciName}) || '%'
+		</if>
+		<if test='swClass != null and swClass != ""'>
+		and		(			tb1.classstructure_id like '%' || #{swClass} || '%'
+					or		tb1.classstructure_id in 	(
+															select 	classstructure_id
+															from 	classstructure tb
+															where	tb.description like '%' || #{swClass} || '%'
+														)		
+				)							
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+							upper(tb1.swcatname) like '%' || upper(#{searchParam}) || '%'
+					or		upper(tb1.publishername) like '%' || upper(#{searchParam}) || '%'
+					or      tb1.swcatversion like '%' || #{searchParam} || '%'
+					or		tb1.classstructure_id in 	(
+															select 	classstructure_id
+															from 	classstructure tb
+															where	tb.description like '%' || #{searchParam} || '%'
+														)	
+				)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>		
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by sw_class, publishername, swcatname, swcatversion
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="CIsw" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.scheduler.SchedulerMapper">
+	<select id="list"  resultType="Scheduler" parameterType="map">
+		select
+			*
+		from scheduler
+	</select>
+
+	<delete id="deleteHistory"  parameterType="string">
+		delete from schedulerhistory 
+		where scheduler_id = #{value}
+		and id not in ( 
+			select id from schedulerhistory  
+			where scheduler_id = #{value} 
+			order by id desc 
+			limit (select historyquantity from scheduler where scheduler_id=#{value})
+		)
+	</delete>
+
+	<delete id="deleteAction"  parameterType="string">
+		delete from scheduleraction 
+		where scheduler_id = #{value}
+		and id not in ( 
+			select id from scheduleraction  
+			where scheduler_id = #{value} 
+			order by id desc 
+			limit (select historyquantity from scheduler where scheduler_id=#{value})
+		)
+	</delete>
+</mapper>

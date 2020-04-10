@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html class="no-js" lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<title></title>
+<meta name=”viewport” content=”width=device-width, initial-scale=1.0" />
+<meta name="description" content="">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="assets/css/common.css" rel="stylesheet">
+<style>
+body {padding: 40px; color: #28313B;}
+h2 {font-size: 22px; border-top: 2px dashed #28313B; border-bottom: 2px solid #28313B; padding: 20px; background: #e8eef4;}
+div.cnt {padding: 30px 0 80px 0;}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    vertical-align: baseline
+}
+div.popup-link a {
+    margin: 0 50px; color: #000; font-weight: bold;
+}
+a.loading-start {
+    font-size: 22px; font-weight: bold; color: #000;
+}
+</style>
+</head>
+<body>
+
+
+<h2>BUTTON</h2>
+<div class="cnt">
+    <a class="cs-btn purple">button</a> <a href="#" class="cs-btn green">button</a> <a class="cb-btn green">button</a> <br /><br />
+    <a href="#" class="cs-btn purple sm">button</a> <a href="#" class="cs-btn green sm">button</a> <a href="#" class="cb-btn green sm">button</a><br /><br />
+    <a href="#" class="cs-btn purple smer">button</a> <a href="#" class="cs-btn green smer">button</a> <a href="#" class="cb-btn green smer">button</a>
+</div>
+
+<h2>INPUT (USER)</h2>
+<div class="cnt" style="height: 400px">
+    <!-- only input -->
+    <div class="input-user-wrap" style="width: 300px">
+        <input type="text" class="formdata" placeholder="Type User Name or Department" />
+        <ul class="user-list">
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">James April</span>
+                    <span class="jobs">Historian</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture2.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">James Base</span>
+                    <span class="jobs">Computer Support Specialist</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture3.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">James Tailor</span>
+                    <span class="jobs">Compliance Officer</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture4.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">Jonadan Smith</span>
+                    <span class="jobs">Epidemiologist</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture5.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">June Mary</span>
+                    <span class="jobs">Architect</span>
+                </p>
+            </li>
+        </ul>
+    </div>
+    <!-- //only input -->
+
+    <!-- selected input -->
+    <div class="input-user-wrap" style="width: 500px;">
+        <ul class="selected-user clearfix">
+            <li>
+                <span class="f"><img src="assets/img/temp/picture.png" alt="" /></span>
+                <span class="s">James Base</span>
+                <a href="#" class="remove">remove</a>
+            </li>
+        </ul>
+        <input type="text" class="formdata" style="padding-left: 183px" placeholder="Type User Name or Department" />
+        <ul class="user-list selected" style="left: 183px;">
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">James April</span>
+                    <span class="jobs">Historian</span>
+                </p>
+            </li>
+            <li class="clearfix on">
+                <span class="picture"><img src="assets/img/temp/picture2.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">James Base</span>
+                    <span class="jobs">Computer Support Specialist</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture3.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">James Tailor</span>
+                    <span class="jobs">Compliance Officer</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture4.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">Jonadan Smith</span>
+                    <span class="jobs">Epidemiologist</span>
+                </p>
+            </li>
+            <li class="clearfix">
+                <span class="picture"><img src="assets/img/temp/picture5.png" alt="" /></span>
+                <p class="info">
+                    <span class="name">June Mary</span>
+                    <span class="jobs">Architect</span>
+                </p>
+            </li>
+        </ul>
+    </div>
+    <!-- //selected input -->
+</div>
+
+<h2>INPUT / TEXTAREA</h2>
+<div class="cnt">
+    <strong>Big </strong>
+    <input type="text" class="formdata" style="width: 100%;" placeholder="Type text" />
+    <p class="form_some-copy">Some info copy here</p>
+    <br />
+    <input type="text" class="formdata" style="width: 100%;" value="disabled input" disabled="disabled" />
+    <br /><br />
+    <textarea class="formdata" style="width: 100%;" placeholder="Type your comment"></textarea>
+    <br /><br />
+    <strong>Small</strong>
+    <input type="text" class="formdata sm" style="width: 100%;" placeholder="Type text" />
+    <p class="form_some-copy">Some info copy here</p>
+    <br />
+    <input type="text" class="formdata sm" style="width: 100%;" value="disabled input" disabled="disabled" />
+    <br /><br />
+    <textarea class="formdata sm" style="width: 100%;" placeholder="Type your comment"></textarea>
+    <br /><br />
+    <strong>Smaller</strong>
+    <input type="text" class="formdata smer" style="width: 100%;" placeholder="Type text" />
+    <p class="form_some-copy smer">Some info copy here</p>
+    <br />
+    <input type="text" class="formdata smer" style="width: 100%;" value="disabled input" disabled="disabled" />
+    <br /><br />
+    <textarea class="formdata smer" style="width: 100%;" placeholder="Type your comment"></textarea>
+    <br /><br /><br />
+
+    <strong>State Big</strong>
+    <input type="text" class="formdata error" style="width: 100%;" value="Type text" />
+    <p class="form_some-copy error">Some info copy here</p>
+    <br />
+    <input type="text" class="formdata good" style="width: 100%;" value="Type text" />
+    
+    <br /><br />
+    <strong>State Small</strong>
+    <input type="text" class="formdata sm error" style="width: 100%;" value="Type text" />
+    <p class="form_some-copy sm error">Some info copy here</p>
+    <br />
+    <input type="text" class="formdata sm good" style="width: 100%;" value="Type text" />
+
+    <br /><br />
+    <strong>State Smaller</strong>
+    <input type="text" class="formdata smer error" style="width: 100%;" value="Type text" />
+    <p class="form_some-copy smer error">Some info copy here</p>
+    <br />
+    <input type="text" class="formdata smer good" style="width: 100%;" value="Type text" />
+
+    <br /><br />
+    <strong>Input file</strong>
+    <div class="input-file-container">  
+        <input class="input-file" id="my-file" type="file">
+        <label tabindex="0" for="my-file" class="input-file-trigger">FIND</label>
+        <p class="file-return"></p>
+    </div>
+
+    <br />
+    <div class="input-file-container sm">  
+        <input class="input-file" id="my-file" type="file">
+        <label tabindex="0" for="my-file" class="input-file-trigger">FIND</label>
+        <p class="file-return"></p>
+    </div>
+
+    <br /><br />
+    <strong>Search</strong>
+    <div class="search-component">
+        <input type="text" class="formdata" style="width: 100%;" placeholder="Type text" />
+        <a href="#" class="search-button">search</a>
+    </div>
+
+    <br />
+    <div class="search-component sm">
+        <input type="text" class="formdata sm" style="width: 100%;" placeholder="Type text" />
+        <a href="#" class="search-button">search</a>
+    </div>
+
+</div>
+
+<h2>CHECKBOX / RADIO / CHECKBOX TOGGLE</h2>
+<div class="cnt">
+    Checkbox : 
+    <span class="checkbox-default">
+        <input type="checkbox" id="a1" name="a1" /><label for="a1"><span></span></label>
+    </span>
+    <span class="checkbox-default sm">
+        <input type="checkbox" id="c1" name="c1" /><label for="c1"><span></span></label>
+    </span>
+
+    <br /><br />
+    Checkbox toggle : 
+    <span class="radio-wrap">
+        <label class="checkbox-switch">
+            <input type="checkbox" />
+            <span class="slider round"></span>
+        </label>
+    </span>
+
+    <br /><br />
+    Radio : 
+    <span class="radiobox-default">
+        <input type="radio" id="b1" name="b1" /><label for="b1"><span></span></label>
+    </span>
+    <span class="radiobox-default sm">
+        <input type="radio" id="d1" name="d1" /><label for="d1"><span></span></label>
+    </span>
+</div>
+
+<h2>SELECT BOX</h2>
+<div class="cnt">
+    <div class="select-wrap" style="width: 300px">
+        <input type="text" class="select-data select_data-options" style="width: 100%;" value="Select" readonly />
+        <div class="options">
+            <ul>
+                <li><a href="#" data-value="1">New Nadia</a></li>
+                <li><a href="#" data-value="2">North Eviemouth</a></li>
+                <li><a href="#" data-value="3">Robeltown</a></li>
+                <li><a href="#" data-value="4">Framiville</a></li>
+                <li><a href="#" data-value="5">South Virgil</a></li>
+                <li><a href="#" data-value="6">Robeltown</a></li>
+                <li><a href="#" data-value="7">Framiville</a></li>
+                <li><a href="#" data-value="8">South Virgil</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="select-wrap sm" style="width: 300px">
+        <input type="text" class="select-data select_data-options" style="width: 100%;" value="Select" readonly />
+        <div class="options">
+            <ul>
+                <li><a href="#" data-value="1">New Nadia</a></li>
+                <li><a href="#" data-value="2">North Eviemouth</a></li>
+                <li><a href="#" data-value="3">Robeltown</a></li>
+                <li><a href="#" data-value="4">Framiville</a></li>
+                <li><a href="#" data-value="5">South Virgil</a></li>
+                <li><a href="#" data-value="6">Robeltown</a></li>
+                <li><a href="#" data-value="7">Framiville</a></li>
+                <li><a href="#" data-value="8">South Virgil</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="select-wrap smer" style="width: 300px">
+        <input type="text" class="select-data select_data-options" style="width: 100%;" value="Select" readonly />
+        <div class="options">
+            <ul>
+                <li><a href="#" data-value="1">New Nadia</a></li>
+                <li><a href="#" data-value="2">North Eviemouth</a></li>
+                <li><a href="#" data-value="3">Robeltown</a></li>
+                <li><a href="#" data-value="4">Framiville</a></li>
+                <li><a href="#" data-value="5">South Virgil</a></li>
+                <li><a href="#" data-value="6">Robeltown</a></li>
+                <li><a href="#" data-value="7">Framiville</a></li>
+                <li><a href="#" data-value="8">South Virgil</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <p style="padding: 20px 0 0 0">Standard select (use select DOM)</p>
+    <div class="select-standard-wrap" style="width: 200px;">
+        <select>
+            <option value="member1" selected>member1</option>
+            <option value="member2">member2</option>
+            <option value="member3">member3</option>
+            <option value="member4">member4</option>
+            <option value="member5">member5</option>
+        </select>
+    </div>
+
+    <div class="select-standard-wrap sm" style="width: 200px;">
+        <select>
+            <option value="member1" selected>member1</option>
+            <option value="member2">member2</option>
+            <option value="member3">member3</option>
+            <option value="member4">member4</option>
+            <option value="member5">member5</option>
+        </select>
+    </div>
+
+    <div class="select-standard-wrap smer" style="width: 200px;">
+        <select>
+            <option value="member1" selected>member1</option>
+            <option value="member2">member2</option>
+            <option value="member3">member3</option>
+            <option value="member4">member4</option>
+            <option value="member5">member5</option>
+        </select>
+    </div>
+          
+</div>
+
+
+<h2>TABLE</h2>
+<div class="cnt">
+    <!-- grid table -->
+    <div class="custom_table-grid">
+        <table class="notable">
+            <cologroup>
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+            </cologroup>
+            <thead>
+            <tr>
+                <th>DATA TITLE</th>
+                <th>DATA TITLE</th>
+                <th>DATA TITLE</th>
+                <th>DATA TITLE</th>
+                <th>DATA TITLE</th>
+                <th>DATA TITLE</th>
+                <th>DATA TITLE</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>TBODY</td>
+                <td>TBODY</td>
+                <td>TBODY</td>
+                <td>TBODY</td>
+                <td>TBODY</td>
+                <td>TBODY</td>
+                <td>TBODY</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- //grid table -->
+    <br /><br />
+    <!-- grid table -->
+    <div class="custom_table-grid">
+        <table class="notable">
+            <cologroup>
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+            </cologroup>
+            <thead>
+            <tr>
+                <th><span class="n">THEAD</span><span class="m"><a href="#" class="sort-up" title="Ascend">Ascend</a><a href="#" class="sort-down" title="Descend">Descend</a></span></th>
+                <th>
+                    <span class="n">THEAD</span><span class="s">
+                        <a href="#" class="select-up grid_select-options" title="options">선택</a>
+                        <div class="options grid_select-option" style="display: none">
+                            <span class="tit">TYPE</span>
+                            <ul>
+                                <li>
+                                    <span class="checkbox-default sm">
+                                        <!-- test event --><input type="checkbox" id="c1" name="c1" checked  onclick="PJT.deviceInventoryFilter()" /><label for="c1"><span></span>Cloud Server</label>
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </span>
+                </th>
+                <th><span class="n">THEAD</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>TBODY</td>
+                <td>TBODY</td>
+                <td>TBODY</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- //grid table -->
+</div>
+
+<h2>POPUP</h2> 
+<div class="cnt">
+    <div class="popup-link">
+        <a href="#" class="show-open-pop" data-num="1">Thank you for applying</a>
+        <a href="#" class="show-open-pop" data-num="2">Do you want to delete?</a>
+        <a href="#" class="show-open-pop" data-num="3">Something Wrong Number</a>
+        <a href="#" class="show-open-pop" data-num="4">Created the Weekly Report</a>
+        <a href="#" class="show-open-pop" data-num="5">only text popup</a>
+        <a href="#" class="show-open-pop" data-num="6">search popup</a>
+        <a href="#" class="show-open-pop" data-num="7">send email report</a><br /><br />
+
+        <a href="#" class="show-open-tiny" data-num="1">tiny wifi</a>
+        <a href="#" class="show-open-tiny" data-num="2">tiny alert</a>
+    </div>
+
+    <!-- 팝업 배경 -->
+    <div class="dimmed-film" style="display: none"></div>
+
+    <!-- ************************************** popup ************************************************* -->
+    <!-- search data -->
+    <div id="popup-6" class="search-data-popup" style="display: none">
+        <input type="input" class="search-input" placeholder="Search Data" /><a href="#" class="search">search</a>
+        <ul>
+            <li><a href="#">O'Hare International Airport</a></li>
+            <li><a href="#">Soekarno–Hatta International Airport</a></li>
+            <li><a href="#">Charlotte Douglas International Airport</a></li>
+            <li><a href="#">O'Hare International Airport</a></li>
+            <li><a href="#">O'Hare International Airport</a></li>
+            <li><a href="#">Soekarno–Hatta International Airport</a></li>
+            <li><a href="#">Charlotte Douglas International Airport</a></li>
+            <li><a href="#">O'Hare International Airport</a></li>
+        </ul>
+    </div>
+    <!-- //search data-->
+    <!--E-mail Popup-->
+    <div id="popup-7" class="tiny-popup-wrap" style="display: none">
+        <a href="#" class="close-btn">close</a>
+        <span class="popup-img email"></span>
+        <p class="paragraph">
+            <strong class="normal" style="padding-bottom: 14px">Send the report to below e-mail</strong>
+            <input type="text" class="formdata" placeholder="E-mail" style="width: 100%;" />
+        </p>
+        <div class="popup-btn-center">
+            <a href="#" class="cs-btn green">SEND</a>
+        </div>
+    </div>
+    <!--//E-mail Popup-->
+    <!--Thank you for applying-->
+    <div id="popup-1" class="tiny-popup-wrap" style="display: none">
+        <a href="#" class="close-btn">close</a>
+        <span class="popup-img check"></span>
+        <p class="paragraph">
+            <strong class="normal">Thank you for applying</strong>
+            <span class="normal">Your ID applying has been successfully completed.</span>
+        </p>
+        <div class="popup-btn-center">
+            <a href="#" class="cs-btn green">BUTTON</a>
+        </div>
+    </div>
+    <!--//Thank you for applying-->
+    <!--Do you want to delete?-->
+    <div id="popup-2" class="tiny-popup-wrap" style="display: none">
+        <a href="#" class="close-btn">close</a>
+        <span class="popup-img delete"></span>
+        <p class="paragraph">
+            <strong class="normal">Do you want to delete?</strong>
+            <span class="normal">Dealing With Technical Support 10 Useful Tips</span>
+        </p>
+        <div class="popup-btn-center">
+            <a href="#" class="cs-btn green">BUTTON</a>
+        </div>
+    </div>
+    <!--//Do you want to delete?-->
+    <!--Something Wrong Number-->
+    <div id="popup-3" class="tiny-popup-wrap" style="display: none">
+        <a href="#" class="close-btn">close</a>
+        <span class="popup-img warn"></span>
+        <p class="paragraph">
+            <strong class="normal">Something Wrong Number</strong>
+            <span class="normal">Can you try to login with right your ID and Password?</span>
+        </p>
+        <div class="popup-btn-center">
+            <a href="#" class="cs-btn green">BUTTON</a>
+        </div>
+    </div>
+    <!--//Something Wrong Number-->
+    <!--Created the Weekly Report-->
+    <div id="popup-4" class="tiny-popup-wrap" style="display: none">
+        <a href="#" class="close-btn">close</a>
+        <span class="popup-img info"></span>
+        <p class="paragraph">
+            <strong class="normal">Created the Weekly Report</strong>
+            <span class="normal">WordPress Version 2 0 3 Review</span>
+        </p>
+        <div class="popup-btn-center">
+            <a href="#" class="cs-btn green">BUTTON</a>
+        </div>
+    </div>
+    <!--//Created the Weekly Report-->
+
+    <!--only text-->
+    <div id="popup-5" class="tiny-popup-wrap" style="display: none">
+        <a href="#" class="close-btn">close</a>
+        <p class="paragraph-only">
+            Get The Boot A Birds Eye Look Into Mcse Boot Camps
+        </p>
+        <div class="popup-btn-center">
+            <a href="#" class="cs-btn green">BUTTON</a>
+        </div>
+    </div>
+    <!--only text-->
+
+    <!--tiny wifi-->
+    <div id="tiny-1" class="tiny-side-tooltip"><!--보여질때, 없어질때 class "on" 토글-->
+        <a href="#" class="close-btn">close</a>
+        <p class="paragraph-tiny wifi">
+            Dvd Replication For Dummies 4 Easy Steps To Professional Dvd Replication
+        </p>
+    </div>
+    <!--//tiny wifi-->
+
+    <!--tiny wifi-->
+    <div id="tiny-2" class="tiny-side-tooltip"><!--보여질때, 없어질때 class "on" 토글-->
+        <a href="#" class="close-btn">close</a>
+        <p class="paragraph-tiny some-alert">
+            Dvd Replication For Dummies 4 Easy Steps To Professional Dvd Replication
+        </p>
+    </div>
+    <!--//tiny wifi-->
+    <!-- //************************************** popup ************************************************* -->    
+</div>
+
+<h2>Useful components</h2>
+<div class="cnt">
+
+    <!-- require  mark -->
+    <div class="form-comp">
+        <span class="tit">Sample title</span><span class="require-mark">*</span>
+        <input type="text" class="formdata" style="width: 100%;" placeholder="필수항목 표시는 위와 같이 해당 타이틀의 안과 밖에 넣어주면 됩니다." />
+    </div>
+    <div class="form-comp">
+        <span class="tit">Sample title<span class="require-mark">*</span></span>
+        <input type="text" class="formdata" style="width: 100%;" placeholder="필수항목 표시는 위와 같이 해당 타이틀의 안과 밖에 넣어주면 됩니다." />
+    </div>
+    <!-- //require  mark -->
+
+    <br /><br />
+
+    <!-- loading -->
+    <div class="loading-round" style="display: none">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <!-- //loading -->
+
+    <a href="#" class="loading-start">Loading Play</a>
+
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<script src="assets/js/custom.js"></script>
+<script>
+$(document).ready(function (){
+
+    function selectBoxInit() {
+        $('select').each(function() {
+            $(this).wrap('<div class="select_wrapper"></div>')
+            $(this).parent().prepend('<span>'+ $(this).find(':selected').text() +'</span>');
+            $(this).parent().children('span').width($(this).width());	
+            $(this).css('display', 'none');					
+            $(this).parent().append('<ul class="select_inner"></ul>');
+            $(this).children().each(function(){
+                var opttext = $(this).text();
+                var optval = $(this).val();
+                $(this).parent().siblings('.select_inner').append('<li id="' + optval + '">' + opttext + '</li>');
+            });
+
+            $(this).parent().find('li').on('click', function (){
+                var cur = $(this).attr('id');
+                $(this).parent().siblings('span').text($(this).text());
+                $(this).parent().siblings('select').children().removeAttr('selected');
+                $(this).parent().siblings('select').children('[value="'+cur+'"]').attr('selected','selected');					
+            });
+            $(this).parent().on('click', function (){
+                $(this).find('ul').slideToggle('fast');
+            });
+        });
+    }
+    
+    // selectBoxInit();
+
+    // 팝업테스트용
+    $('.show-open-pop').on('click', function(e) {   
+        var number = $(this).data('num');
+        $('div.dimmed-film, #popup-' + number).fadeIn();
+        e.preventDefault();
+    });
+
+    // 우측 팝업테스트용
+    $('.show-open-tiny').on('click', function(e) {   
+        var number = $(this).data('num');
+        $('#tiny-' + number).addClass('on');
+        e.preventDefault();
+    });
+
+    // loading start
+    $('.loading-start').on('click', function() {
+        $('div.dimmed-film, div.loading-round').fadeIn();
+    });
+
+    // input file
+    var inputFileInput  = document.querySelector( ".input-file" );  
+    var inputFilebutton = document.querySelector( ".input-file-trigger" );
+    var inputFileReturn = document.querySelector(".file-return");
+
+    inputFilebutton.addEventListener( "keydown", function(event) {  
+        if ( event.keyCode == 13 || event.keyCode == 32 ) {  
+            fileInput.focus();  
+            return false;
+        }  
+    });
+    inputFilebutton.addEventListener( "click", function(event) {
+        inputFileInput.focus();
+        return false;
+    });  
+    inputFileInput.addEventListener( "change", function(event) {  
+        alert(this.value)
+        inputFileReturn.innerHTML = this.value;  
+    });
+
+    //compose test dummy
+    // $('select').wrap('<div class="select_wrapper"></div>')
+    // $('select').parent().prepend('<span>'+ $(this).find(':selected').text() +'</span>');
+    // $('select').parent().children('span').width($('select').width());	
+    // $('select').css('display', 'none');					
+    // $('select').parent().append('<ul class="select_inner"></ul>');
+    // $('select').children().each(function(){
+    //     var opttext = $(this).text();
+    //     var optval = $(this).val();
+    //     $('select').parent().children('.select_inner').append('<li id="' + optval + '">' + opttext + '</li>');
+    // });
+
+    // $('select').parent().find('li').on('click', function (){
+    //     var cur = $(this).attr('id');
+    //     $('select').parent().children('span').text($(this).text());
+    //     $('select').children().removeAttr('selected');
+    //     console.log($('select').children());
+    //     $('select').children('[value="'+cur+'"]').attr('selected','selected');					
+    // });
+    // $('select').parent().on('click', function (){
+    //     $(this).find('ul').slideToggle('fast');
+    // });
+
+});
+</script>
+</body>
+</html>

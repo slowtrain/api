@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : domain-mapper.xml
+Description : 코드체계
+수정일     수정자  수정내용
+====       =====  ================
+2019.11.20 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.domain.DomainMapper">
+
+
+	<select id="domainlist" resultType="Domain" parameterType="map">
+		select
+			id
+			,domain_Id
+			,key
+			,value
+			,seq
+			,description
+			,create_dt
+			,create_id
+			,getusername_fn(create_id) as create_nm
+			,update_dt
+			,update_id
+			,getusername_fn(update_id) as update_nm
+		from domain
+		where 1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test="domainId != null and domainId != ''">
+				and domain_Id = #{domainId}
+		</if>
+		
+
+	</select>
+
+	<select id="list"  resultType="ESDomain" parameterType="map">
+		select 
+			id
+			,domain_Id
+			,description
+			,create_dt
+			,create_id
+			,getusername_fn(create_id) as create_nm
+			,update_dt
+			,update_id
+			,getusername_fn(update_id) as update_nm
+		from esdomain
+		where 1=1
+		<if test="domainId != null and domainId != ''">
+				and domain_Id = #{domainId}
+		</if>
+	</select>
+
+
+</mapper>

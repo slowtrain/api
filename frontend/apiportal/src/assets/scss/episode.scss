@@ -1,0 +1,83 @@
+
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px
+);
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  // xl: 98%
+  xl: 1480px
+);
+
+  .signin {
+    .container-scroller {
+      .container-fluid {
+        .content-wrapper {
+          background: url("./assets/images/signin.png") 0 0 no-repeat;
+          -webkit-background-size: cover;
+          -ms-background-size: cover;
+          background-size: cover;
+        }
+      }
+    }
+  }
+
+  .register {
+    .container-scroller {
+      .container-fluid {
+        .content-wrapper {
+          background: url("./assets/images/signin.png") 0 0 no-repeat;
+          -webkit-background-size: cover;
+          -ms-background-size: cover;
+          background-size: cover;
+        }
+      }
+    }
+  }
+  
+  .top-navbar {
+    .container-fluid {
+      padding-left: 3em;
+      padding-right: 3em;
+    }
+    .container {
+      padding-left: 2em;
+      padding-right: 2em;
+      .page-navigation {
+        justify-content: flex-start !important;
+      }
+    }
+  }
+  
+  .bottom-navbar {
+    .container-fluid {
+      padding-left: 2em;
+      padding-right: 2em;
+      .page-navigation {
+        justify-content: flex-start !important;
+      }
+      .nav-item {
+        padding-left: 2em;
+        padding-left: 2em;
+      }
+    }
+    .container {
+      .page-navigation {
+        justify-content: flex-start !important;
+      }
+      .nav-item {
+        padding-left: 2em;
+        padding-left: 2em;
+      }
+    }
+  }
+
+  .sidebar {
+    background: #ffffff !important;
+  }
+  

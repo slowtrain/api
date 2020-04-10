@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.workflow.WorkflowMapper">
+	<select id="isTrue" resultType="boolean" >
+        select exists (select * from ${object} where id = #{id} and ( ${sql} ) )
+    </select>
+
+    <select id="isAssigned" resultType="boolean" >
+        select exists (
+				select 1 from wfassignment
+				where available = true
+				and username=#{username}
+				and wfinstance_uid = #{instanceUid}
+              )
+    </select>
+
+    <select id="getWFInstance" resultType="com.itmsg.episode.app.system.workflow.WFInstance" >
+        select * from wfinstance w2 
+        where object_uid=#{uid}
+        and status='ACTIVE'
+        and wfprocess_uid in (select id from wfprocess where object_id=#{objectId})
+    </select>
+
+    <select id="currentWFNode" resultType="map" >
+        select * from wfnode where id = 4
+    </select>
+
+    <select id="currentWFConnector" resultType="map" >
+        select * from wfconnector where id = 9
+    </select>
+
+	<select id="getMaxRevision" resultType="Integer" >
+		select max(revision) from wfprocess where object_id=#{objectId}
+    </select>
+
+    <select id="getWFAssignment" resultType="map">
+        select 
+            wfa.id id
+            ,wfi.id "wfinstanceUid"
+            ,wfi.wfprocess_uid "wfprocessUid"
+            ,wfp.description "description"
+            ,wfp.object_id "objectId"
+            ,wfi.object_uid "objectUid"
+            ,wfa.username "username"
+            ,wfa.available "available"
+            ,wfa.create_Id "createId"
+            ,wfa.create_dt "createDt"
+        from  wfassignment wfa
+        inner join wfinstance wfi
+        on wfi.id = wfa.wfinstance_uid
+        inner join wfprocess wfp
+        on wfi.wfprocess_uid = wfp.id
+        where 1=1
+        <if test="username != null and username != ''">
+			and wfa.username = #{username}
+		</if>
+        <if test="available != null ">
+			and wfa.available = #{available}
+		</if>
+    </select>
+</mapper>

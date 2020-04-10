@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.role.RoleMapper">
+
+	<!-- ROLE -->
+	<select id="roleList"  resultType="Role" parameterType="map">
+
+		select  tb.*
+		    ,   getusername_fn(tb.create_id) as create_nm
+		    , 	getusername_fn(tb.update_id) as update_nm
+		from role tb
+		where 1=1
+
+		<if test="USERFILTER != null and USERFILTER != ''">
+			and ${USERFILTER}
+		</if>
+	</select>
+
+	<select id="childDataCount"  resultType="map" parameterType="map">
+
+		select
+			(select count(*) from roleuser where role_id = #{ROLEID}) roleuser,
+			(select count(*) from roleauth where role_id = #{ROLEID}) roleauth,
+			(select count(*) from rolefilter where role_id = #{ROLEID}) rolefilter,
+            (select count(*) from rolegroup where role_id = #{ROLEID}) rolegroup
+
+	</select>
+
+	<!-- Role Auth -->
+	<select id="roleAuthList"  resultType="RoleAuth" parameterType="map">
+		select
+		*
+		from roleauth
+		where 1=1
+
+		<if test="ROLEID != null and ROLEID != ''">
+			and role_id = #{ROLEID}
+		</if>
+
+	</select>
+
+	<select id="authList"  resultType="Authority" parameterType="map">
+		select  id
+			,	app_id
+			,	authority_id
+			,	description
+		from 	authority
+		where 	authority_id not in (
+										select  authority_id
+										from 	roleauth
+										where 	role_id = #{ROLEID}
+									)
+		order by app_id, authority_id, description
+	</select>
+
+	<select id="userAuthMapping" resultType="map" parameterType="map">
+		select  role_id
+			,	username
+			,	app_id
+			,	authority_id
+		from	(
+					select  users.role_id
+						,	users.username
+						,	roleauth.app_id
+						,	roleauth.authority_id
+						,	(
+								select  authority_id
+								from 	userauthority
+								where	userauthority.username = users.username
+								and 	userauthority.authority_id = roleauth.authority_id
+								and 	userauthority.app_id = roleauth.app_id
+							) as mapping
+					from    (
+								select  distinct #{ROLEID} role_id
+									, 	username
+								from 	(
+											select  username
+											from	groupuser
+                    						where   usergroup_id in (
+																	 select  usergroup_id
+																	 from 	 rolegroup
+																	 where 	 role_id = #{ROLEID}
+																	)
+								union all
+								select  username
+								from	roleuser
+								where 	role_id = #{ROLEID}
+							) aa
+				) users
+		left join roleauth on users.role_id = roleauth.role_id
+
+			<if test="AUTH != null and AUTH != ''">
+				and ${AUTH}
+			</if>
+
+		) aa
+		where mapping is null
+	</select>
+
+	<select id="authByRole" resultType="map" parameterType="map">
+		select  *
+		from 	roleauth
+		where 	role_id in (
+				  		   	select  role_id
+							from 	role
+							where 	role_id in (
+												select  role_id
+												from	roleuser
+												where 	username = #{USERNAME}
+											   )
+				  			union all
+				  			select  role_id
+							from 	rolegroup
+							where	usergroup_id in (
+													 select  usergroup_id
+													 from 	 groupuser
+													 where 	 username = #{USERNAME}
+													)
+			  			   )
+		and 	authority_id = (
+								select  authority_id
+								from 	roleauth
+								where 	id=${ID}
+							   )
+	</select>
+
+	<delete id="authDeleteAll" parameterType="String">
+        delete from roleauth
+        where role_id = #{ROLEID}
+    </delete>
+
+	<!-- Role Filter -->
+	<select id="roleFilterList"  resultType="RoleFilter" parameterType="map">
+		select 
+			* 
+		from rolefilter
+		where 1=1
+
+		<if test="ROLEID != null and ROLEID != ''">
+			and role_id = #{ROLEID}
+		</if>
+
+	</select>
+
+
+	<select id="userFilterMapping" resultType="map" parameterType="map">
+		
+		select  role_id
+			,	username
+			,	datafilter_id
+			,	 whereclause
+		from 	(
+					select  users.role_id
+						,	users.username
+						,	rolefilter.datafilter_id
+						,	rolefilter.whereclause
+						,	(
+								select  datafilter_id
+								from 	userfilter
+								where 	userfilter.username = users.username
+					  			and		userfilter.datafilter_id = rolefilter.datafilter_id
+							) as mapping
+					from	(
+								select  distinct #{roleid} role_id
+									,	username
+								from 	(
+                        					select 	username
+											from	groupuser
+                        					where 	usergroup_id in (
+																	 select usergroup_id
+																	 from rolegroup
+																	 where role_id = #{ROLEID}
+																	)
+											union all
+											select 	username
+											from	roleuser
+											where 	role_id = #{ROLEID}
+										) aa
+							) users
+					left join rolefilter on users.role_id = rolefilter.role_id
+
+					<if test="FILTER != null and FILTER != ''">
+					and ${FILTER}
+					</if>
+
+				) aa
+		where mapping is null
+
+	</select>
+
+
+	<select id="filterByRole" resultType="map" parameterType="map">
+
+		select  *
+		from 	rolefilter
+		where	role_id in (
+				  			select  role_id
+							from 	role
+							where 	role_id in (
+												select  role_id
+												from 	roleuser
+												where 	username = #{USERNAME}
+												)
+				  			union all
+				  			select  role_id
+							from 	rolegroup
+							where 	usergroup_id in (
+													 select  usergroup_id
+													 from 	 groupuser
+													 where	 username = #{USERNAME}
+													)
+		 					)
+		and 	datafilter_id = (
+								 select  datafilter_id
+								 from	 rolefilter
+								 where	 id=${ID}
+								)
+
+	</select>
+
+
+	<delete id="filterDeleteAll" parameterType="String">
+
+        delete from rolefilter
+        where role_id = #{ROLEID}
+    </delete>
+
+
+	<!-- Role User -->
+	<select id="users" resultType="User" parameterType="map">
+		select * from esuser
+		where status = 'ACTIVE'
+		<if test="ROLEUSERS != null and ROLEUSERS != ''">
+			and username not in (${ROLEUSERS})
+		</if>
+	</select>
+
+
+	<select id="getRoleUsers" resultType="map" parameterType="String">
+
+		select  distinct #{ROLEID} role_id
+			,	username
+		from 	(
+            		select  username
+					from	groupuser
+            		where 	usergroup_id in (
+											 select  usergroup_id
+											 from 	 rolegroup
+											 where	 role_id = #{ROLEID}
+											)
+            		union all
+            		select username
+					from roleuser
+            		where role_id = #{ROLEID}
+		 		) aa
+
+	</select>
+
+	<!-- Role User Group -->
+	<select id="getUserGroupList" resultType="map" parameterType="String">
+		select  rolegroup.id
+			,	rolegroup.role_id
+			,	usergroup.org_id
+			,	usergroup.description
+		from 	rolegroup
+		inner 	join usergroup
+		on rolegroup.usergroup_id = usergroup.usergroup_id
+		where rolegroup.usergroup_id = #{USERGROUPID}
+		<!-- <if test="USERGROUPID != null and USERGROUPID != ''">
+		WHERE ROLEGROUP.USERGROUP_ID = #{USERGROUPID}
+		</if> -->
+		 <!-- WHERE ROLE_ID = #{ROLEID} -->
+	</select>
+
+    <select id="getGroups" resultType="USERGROUP" parameterType="map">
+        select * from usergroup
+        <if test="groups != null and groups != ''">
+            where usergroup_id not in (${GROUPS})
+        </if>
+    </select>
+
+
+
+</mapper>

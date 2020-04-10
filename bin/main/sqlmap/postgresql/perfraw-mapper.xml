@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.monitor.detail.PerfrawMapper">
+<!--
+SQL File Name : perfraw-mapper.xml
+Description : 성능
+수정일     수정자  수정내용
+====       =====  ================
+2019.09.20 이정호  최초 생성
+-->
+
+	<select id="serverPerf1"  resultType="map" parameterType="map">
+
+		select  array_agg(coalesce(pd.origin_dt, d.origin_dt) order by d.origin_dt) as "origin"
+			 , 	array_agg(coalesce(pd.rscval_double, 0) order by d.origin_dt) as "rscval"
+			 , 	array_agg(coalesce(pd.r, d.r) order by d.origin_dt) as "rt"
+		from	(
+					select	origin_dt
+						,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer <![CDATA[ < ]]>  5
+							then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+							else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+							end as r
+						,	rscval_double
+					from	perfraw 
+			   	  	where   ci_id = #{ciId}
+			   	  	and     perf_detail = #{rscType}
+			      	and     origin_dt  <![CDATA[ > ]]>  ((#{cTime}::timestamp) - interval '22' hour ) - interval '1' day
+			      	and     origin_dt  <![CDATA[ <= ]]>   ((#{cTime}::timestamp) - interval '1' day)
+			      	order by origin_dt
+				) pd
+		full outer join
+				(
+					select (#{cTime}::timestamp) origin_dt
+						, 	case when substr(to_char((#{cTime}::timestamp) , 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>    5
+							then substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 1
+							else substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 2
+							end as r
+					union all
+					select	(#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval origin_dt
+						,	case when substr(to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+							then substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 1
+							else substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 2
+							end as r
+					from 	generate_series(1,265) t(t)
+					where 	t.t <![CDATA[ < ]]> 264
+					order by origin_dt
+				) d
+		on pd.r = d.r
+
+	</select>
+
+
+	<select id="serverPerf2"  resultType="map" parameterType="map">
+
+		select  array_agg(coalesce(pd.origin_dt, d.origin_dt) order by d.origin_dt) as "origin"
+			, 	array_agg(coalesce(pd.rscval_double, 0) order by d.origin_dt) as "rscval"
+			, 	array_agg(coalesce(pd.r, d.r) order by d.origin_dt) as "rt"
+		from	(
+					select  origin_dt
+						,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer <![CDATA[ < ]]> 5
+							then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+							else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+							end as r
+						,	rscval_double
+					from	perfraw 
+			   	  	where   ci_id = #{ciId}
+			   	  	and     perf_detail = #{rscType}
+			      	and     origin_dt  <![CDATA[ > ]]>  (#{cTime}::timestamp) - interval '22' hour
+			      	and     origin_dt  <![CDATA[ <= ]]>   (#{cTime}::timestamp)
+			      	order by origin_dt
+				) pd
+		full outer join
+				(
+					select (#{cTime}::timestamp) origin_dt
+						, 	case when substr(to_char((#{cTime}::timestamp) , 'HH24:MI'),5,1)::integer   <![CDATA[ < ]]>    5
+							then substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 1
+							else substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 2
+							end as r
+					union all
+					select	(#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval origin_dt
+						,	case when substr(to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+							then substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 1
+							else substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 2
+							end as r
+					from 	generate_series(1,265) t(t)
+					where 	t.t <![CDATA[ < ]]> 264
+					order by origin_dt
+				) d
+		on pd.r = d.r
+
+	</select>
+
+
+	<select id="serverPerfAdd1"  resultType="map" parameterType="map">
+
+   	   	select  p.origin_dt as "originDt"
+			,   p.rscval_double as "rscval"
+			,	t.origin_dt as "time"
+			, 	t.r as "rt"
+		from	(
+					select  origin_dt
+						,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+							then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+							else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+							end as r
+						,	rscval_double
+					from	perfraw 
+					where   ci_id = #{ciId}
+					and     perf_detail = #{rscType}
+	    			and     origin_dt =  ((#{cTime}::timestamp) - interval '1' day)
+				) p
+		full outer join
+	    		(
+	    			select  (#{cTime}::timestamp) origin_dt
+						,	case when substr(to_char((#{cTime}::timestamp), 'HH24:MI'),5,1)::integer   <![CDATA[ < ]]>   5
+							then substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 1
+							else substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 2
+							end as r
+	    		) t
+	    on p.r = t.r
+
+	</select>
+
+
+	<select id="serverPerfAdd2"  resultType="map" parameterType="map">
+
+	   	select  p.origin_dt as "originDt"
+			,   p.rscval_double as "rscval"
+			,	t.origin_dt as "time"
+			, 	t.r as "rt"
+		from 	(
+					select  origin_dt
+						,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+							then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+							else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+							end as r
+						,	rscval_double
+					from	perfraw 
+					where   ci_id = #{ciId}
+					and     perf_detail = #{rscType}
+	    			and     origin_dt =  (#{cTime}::timestamp)
+				) p
+		full outer join
+	    		(
+	    			select  (#{cTime}::timestamp) origin_dt
+						,	case when substr(to_char((#{cTime}::timestamp), 'HH24:MI'),5,1)::integer   <![CDATA[ < ]]>   5
+							then substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 1
+							else substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 2
+							end as r
+	    		) t
+	    on p.r = t.r
+
+	</select>
+
+	<select id="serverPerf"  resultType="map" parameterType="map">
+	
+		select  row_to_json(pd) as previousDay
+			,   row_to_json(day) as day
+		from	(
+			     	select  array_agg(t.origin_dt) as "origin"
+			   	     	,   array_agg(t.rscval_double) as "rscval"
+				 	from   (		
+						 	  select  origin_dt
+						          ,   rscval_double
+						   	  from	  perfraw 
+						   	  where   ci_id = #{ciId}
+						   	  and     perf_detail = #{rscType}
+						      and     origin_dt <![CDATA[ >= ]]> date_trunc('day',(#{cTime}::timestamp) - interval '1' day)
+						      and     origin_dt <![CDATA[ < ]]>  date_trunc('day',(#{cTime}::timestamp))
+						      order by origin_dt
+						   ) t
+				)  pd,
+			    (
+				    select  array_agg(t.origin_dt) as "origin"
+				     	,   array_agg(t.rscval_double) as "rscval"
+				 	from   (		
+						   	  select  origin_dt
+						          ,   rscval_double
+						   	  from	  perfraw 
+						   	  where   ci_id = #{ciId}
+						   	  and	  perf_detail = #{rscType}
+						   	  and     origin_dt <![CDATA[ >= ]]> date_trunc('day',(#{cTime}::timestamp))
+						      and     origin_dt <![CDATA[ < ]]>  date_trunc('day',(#{cTime}::timestamp) + interval '1' day)
+						      order by origin_dt
+						   ) t
+				) day
+	</select>
+
+
+	<select id="getDiskIo"  resultType="map" parameterType="map">
+
+		select  row_to_json(j) as "json"
+			,	j.rsc_key_name
+		from	(
+					select  p.rsc_key_name
+						,	array_agg(p.rscval_double) as "rscval"
+						,	array_agg(p.origin_dt) as "origin" 
+					from	(
+								select  rsc_key_name
+									,	rscval_double
+									,	origin_dt
+								from perfraw
+								where ci_id = #{param.ciid}
+								and perf_type = #{rscType}
+								<if test='rscDetail != null and rscDetail != ""'>
+								and perf_detail = #{rscDetail}
+								</if>
+						        and     origin_dt  <![CDATA[ >= ]]>  (#{cTime}::timestamp) - interval '1' day
+						        and     origin_dt  <![CDATA[ < ]]>   (#{cTime}::timestamp)
+								group by rsc_key_name, origin_dt, rscval_double
+							) p
+					group by p.rsc_key_name
+				) j
+
+	</select>
+
+
+	<select id="getDisk"  resultType="map" parameterType="map">
+
+		select 	a.rsc_key_name as "rscKeyName"
+			,	a.rscval_double as "rscvalDouble"
+		from  
+		(
+		select  rsc_key_name 
+			,	rscval_double
+		from 	perfraw
+		where	origin_dt =	(
+								select 	max(origin_dt)
+								from 	perfraw
+								where 	ci_id = #{ciId}
+								and 	perf_detail = #{rscType}
+						    	and     origin_dt  <![CDATA[ >= ]]>  (#{cTime}::timestamp) - interval '1' day
+						      	and     origin_dt  <![CDATA[ < ]]>   (#{cTime}::timestamp)
+							)
+		and 	ci_id = #{ciId}
+		and 	perf_detail = #{rscType}
+		and		rsc_key_name != '_Total'
+		order by origin_dt desc
+		limit 10
+		) a
+		order by rscval_double desc
+
+
+		<!-- select  rsc_key_name as "rscKeyName"
+			,	rscval_double as "rscvalDouble"
+		from 	perfraw
+		where	origin_dt =	(
+								select 	max(origin_dt)
+								from 	perfraw
+								where 	ci_id = #{ciId}
+								and 	perf_detail = #{rscType}
+						    	and     origin_dt  <![CDATA[ >= ]]>  (#{cTime}::timestamp) - interval '1' day
+						      	and     origin_dt  <![CDATA[ < ]]>   (#{cTime}::timestamp)
+							)
+		and 	ci_id = #{ciId}
+		and 	perf_detail = #{rscType}
+		order by rsc_key_name -->
+
+	</select>
+
+	<select id="multipleEmsData"  resultType="map" parameterType="map">
+
+		select  row_to_json(j) as "json"
+			,	j.rsc_key_name
+			from
+					(select
+					d.rsc_key_name	
+					,	array_agg(coalesce(p.rscval_double, 0) order by d.origin_dt) as "rscval"
+					,	array_agg((coalesce(p.origin_dt, d.origin_dt)) order by d.origin_dt) as "origin"
+					, 	array_agg(coalesce(p.r, d.r) order by d.origin_dt) as "rt"					
+					from
+					(
+					select	rsc_key_name
+									,	rscval_double
+									,	origin_dt
+									,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+										then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+										else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+										end as r
+								from 	perfraw
+								where	ci_id = #{ciId}
+								and		perf_detail = #{rscType}
+						        and     origin_dt  <![CDATA[ > ]]>  (#{cTime}::timestamp) - interval '22' hour
+						        and     origin_dt  <![CDATA[ <= ]]>   (#{cTime}::timestamp)
+						        group by rsc_key_name, origin_dt, rscval_double
+					) p
+					full outer join
+					(
+					select * from 
+								(
+								select	distinct(rsc_key_name)
+								from 	perfraw
+								where	ci_id = #{ciId}
+								and		perf_detail = #{rscType}
+						       	and     origin_dt  <![CDATA[ > ]]>  (#{cTime}::timestamp) - interval '22' hour
+						       	and     origin_dt  <![CDATA[ <= ]]>   (#{cTime}::timestamp)
+						       	group by rsc_key_name, origin_dt, rscval_double
+						        ) a,
+						        (
+						        select (#{cTime}::timestamp) origin_dt
+									, 	case when substr(to_char((#{cTime}::timestamp) , 'HH24:MI'),5,1)::integer   <![CDATA[ < ]]>    5
+										then substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 1
+										else substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 2
+										end as r
+								union all
+								select	(#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval origin_dt
+									, 	case when substr(to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>   5
+										then substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 1
+										else substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 2
+										end as r
+								from 	generate_series(1,265) t(t)
+								where 	t.t  <![CDATA[ < ]]>  264
+								order by origin_dt
+								) b
+					) d
+				on (p.r = d.r and p.rsc_key_name = d.rsc_key_name)
+				group by d.rsc_key_name
+				) j
+
+	</select>
+
+
+	<select id="multipleEmsAdd"  resultType="map" parameterType="map">
+
+		select	d.rsc_key_name	
+			, p.origin_dt as "originDt"
+			,   p.rscval_double as "rscval"
+			,	d.origin_dt as "time"
+			, 	d.r as "rt"
+		from	(
+					select	rsc_key_name
+						,	rscval_double
+						,	origin_dt
+						,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer   <![CDATA[ < ]]>   5
+							then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+							else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+							end as r
+					from 	perfraw
+					where	ci_id = #{ciId}
+					and		perf_detail = #{rscType}
+					and     origin_dt   =    (#{cTime}::timestamp)
+				) p
+		full outer join
+				(
+					select  *
+					from	(
+								select	distinct(rsc_key_name)
+								from 	perfraw
+								where	ci_id = #{ciId}
+								and		perf_detail = #{rscType}
+						       	and     origin_dt   <![CDATA[ > ]]>   (#{cTime}::timestamp) - interval '22' hour
+						       	and     origin_dt   <![CDATA[ <= ]]>    (#{cTime}::timestamp)
+						       	group by rsc_key_name, origin_dt, rscval_double
+						    ) a,
+						    (
+	    						select  (#{cTime}::timestamp) origin_dt
+									,	case when substr(to_char((#{cTime}::timestamp), 'HH24:MI'),5,1)::integer    <![CDATA[ < ]]>    5
+										then substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 1
+										else substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 2
+										end as r
+							) b
+				) d
+		on (p.r = d.r and p.rsc_key_name = d.rsc_key_name)
+
+	</select>
+
+	<select id="relationData"  resultType="map" parameterType="map">
+
+			select  j.ciname
+			,	j.ci_id
+			,	j.perf_detail
+			,	row_to_json(j) as "json"
+		from	(	
+					select	c.ciname
+						,	d.ci_id
+						,	d.perf_detail
+						,	array_agg(coalesce(p.rscval_double, 0) order by d.origin_dt) as "rscval"
+						,	array_agg((coalesce(p.origin_dt, d.origin_dt)) order by d.origin_dt) as "origin"	
+						, 	array_agg(coalesce(p.r, d.r) order by d.origin_dt) as "rt"				
+						from	
+						(
+								select	ci_id
+									,	perf_type
+									,	perf_detail
+									,	rscval_double
+									,	origin_dt
+									,	case when substr(to_char(origin_dt, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>   5
+										then substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 1
+										else substr((to_char(origin_dt, 'HH24:MI')),1,2) || substr((to_char(origin_dt, 'HH24:MI')),4,1) || 2
+										end as r
+								from 	(
+										select	*
+										from	perfraw
+										where   sys_class = #{resource}
+										and 	origin_dt  <![CDATA[ > ]]> (#{cTime}::timestamp) - interval '22' hour
+										and 	origin_dt <![CDATA[ <= ]]>   (#{cTime}::timestamp)
+										) pp 
+								where 	exists	(
+												select  1
+												from	cirelation c1
+													,	ci c2
+												where	sourceci = #{ciId}
+												and 	relationname = 'RUN'
+												and 	c1.targetci = c2.ci_id
+												and 	pp.ci_id = c2.ci_id
+												)
+								or 		exists (
+												select	1
+												from	cirelation c1
+													,	ci c2
+												where	targetci = #{ciId}
+												and 	relationname = 'RUN'
+												and 	c1.sourceci = c2.ci_id
+												and 	pp.ci_id = c2.ci_id
+												)			
+								group by ci_id,perf_detail, origin_dt, perf_type,rscval_double
+							) p
+							full outer join
+							(
+							select  *
+							from	(
+								select * from ci pp,
+								(
+									<if test='resource.equals("APM")'>
+									select 'AVERAGE_RESPONSE_TIME' perf_detail union all select 'WAIT_TIME' perf_detail union all select 'RESPONSE_TIME' perf_detail	
+									</if>
+									<if test='resource.equals("DBMS")'>
+									select 'DB_RESPONSETIME' perf_detail union all select 'DB_SESS_COUNT' perf_detail
+									</if>
+								) b
+								where 	pp.ci_id in	( select l.targetci from cirelation l, ci c
+													where	l.sourceci = #{ciId} and l.relationname = 'RUN'
+													and c.ci_id = l.targetci
+													and exists (select 1 from classancestor where ancestor = #{ancestor} and c.classstructure_id = classstructure_id))
+								or 		pp.ci_id in ( select l.sourceci from cirelation l, ci c
+												  	where	l.targetci = #{ciId} and l.relationname = 'RUN'
+														and c.ci_id = l.sourceci
+														and exists (select 1 from classancestor where ancestor = #{ancestor} and c.classstructure_id = classstructure_id))	
+						        ) a,
+						        (
+						        	select (#{cTime}::timestamp) origin_dt
+										, 	case when substr(to_char((#{cTime}::timestamp) , 'HH24:MI'),5,1)::integer   <![CDATA[ < ]]>    5
+											then substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 1
+											else substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) , 'HH24:MI')),4,1) || 2
+											end as r
+									union all
+									select	(#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval origin_dt
+										, 	case when substr(to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>   5
+											then substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 1
+											else substr((to_char((#{cTime}::timestamp) - (t.t * 5 || 'minute' ):: interval, 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp) - (t.t *5 || 'minute' ):: interval, 'HH24:MI')),4,1) || 2
+											end as r
+									from 	generate_series(1,265) t(t)
+									where 	t.t     <![CDATA[ < ]]>     264
+									order by origin_dt
+							) b
+							) d
+					on (p.r = d.r and p.perf_detail = d.perf_detail and p.ci_id = d.ci_id)
+					, ci c
+					where d.ci_id = c.ci_id
+					group by d.ci_id, d.perf_detail, c.ciname
+				) j
+
+
+
+	</select>
+
+
+	<select id="relationAdd"  resultType="map" parameterType="map">
+
+		select	c.ciname
+			,	d.ci_id
+			,	d.perf_detail
+			,   p.origin_dt as "originDt"
+			,   p.rscval_double as "rscval"
+			,	d.origin_dt as "time"
+			, 	d.r as "rt"				
+		from	(
+				select	pp.ci_id
+					,	pp.perf_detail	
+					,	pp.rscval_double
+					,	pp.origin_dt
+					,	case when substr(to_char(pp.origin_dt, 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+						then substr((to_char(pp.origin_dt, 'HH24:MI')),1,2) || substr((to_char(pp.origin_dt, 'HH24:MI')),4,1) || 1
+						else substr((to_char(pp.origin_dt, 'HH24:MI')),1,2) || substr((to_char(pp.origin_dt, 'HH24:MI')),4,1) || 2
+						end as r
+				from	(
+						select	*
+						from	perfraw
+						where   sys_class = #{resource}
+						and origin_dt = (#{cTime}::timestamp)
+						) pp
+				where 	exists  (
+								select	1
+								from	cirelation c1
+									,	ci c2
+								where	sourceci = #{ciId}
+								and 	relationname = 'RUN'
+								and 	c1.targetci = c2.ci_id
+								and 	pp.ci_id = c2.ci_id
+								)
+				or 		exists (
+								select	1
+								from	cirelation c1
+									,	ci c2
+								where	targetci = #{ciId}
+								and		relationname = 'RUN'
+								and	 	c1.sourceci = c2.ci_id
+								and	 	pp.ci_id = c2.ci_id
+								)
+				group by ci_id,perf_detail, origin_dt, rscval_double
+				) p
+		full outer join			
+				(	
+				select  *
+				from	(
+								select * from ci pp,
+								(
+									<if test='resource.equals("APM")'>
+									select 'AVERAGE_RESPONSE_TIME' perf_detail union all select 'WAIT_TIME' perf_detail union all select 'RESPONSE_TIME' perf_detail	
+									</if>
+									<if test='resource.equals("DBMS")'>
+									select 'DB_RESPONSETIME' perf_detail union all select 'DB_SESS_COUNT' perf_detail
+									</if>
+								) b
+								where 	pp.ci_id in	( select l.targetci from cirelation l, ci c
+													where	l.sourceci = #{ciId} and l.relationname = 'RUN'
+													and c.ci_id = l.targetci
+													and exists (select 1 from classancestor where ancestor = #{ancestor} and c.classstructure_id = classstructure_id))
+								or 		pp.ci_id in ( select l.sourceci from cirelation l, ci c
+												  	where	l.targetci = #{ciId} and l.relationname = 'RUN'
+														and c.ci_id = l.sourceci
+														and exists (select 1 from classancestor where ancestor = #{ancestor} and c.classstructure_id = classstructure_id))
+				        ) a,
+						(
+			    		select  (#{cTime}::timestamp) origin_dt
+							,	case when substr(to_char((#{cTime}::timestamp), 'HH24:MI'),5,1)::integer  <![CDATA[ < ]]>  5
+								then substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 1
+								else substr((to_char((#{cTime}::timestamp), 'HH24:MI')),1,2) || substr((to_char((#{cTime}::timestamp), 'HH24:MI')),4,1) || 2
+								end as r
+						)b			
+				) d
+		on (p.r = d.r and p.perf_detail = d.perf_detail and p.ci_id = d.ci_id)
+		, ci c
+		where d.ci_id = c.ci_id	
+
+	</select>
+
+
+
+</mapper>

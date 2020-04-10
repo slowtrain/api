@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : company-mapper.xml
+Description : 업체
+수정일     수정자  수정내용
+====       =====  ================
+2019.10.29 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.management.company.CompanyMapper">
+
+	<sql id="includeSql">
+		select	0 as chk
+			,	tb.*
+			,	getdomainnm_fn('COMPANYTYPE', tb.companytype) as companytypenm
+			,	getusername_fn(tb.create_id) as create_nm
+			,	getusername_fn(tb.update_id) as update_nm
+		from 	company tb
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='id != null and id != ""'>
+		and		id = #{id}
+		</if>
+		<if test='orgId != null and orgId != "" and orgId != "null"'>
+		and		tb.org_id = #{orgId}
+		</if>
+		<if test='companytype != null and companytype != "" and companytype != "null"'>
+		and		tb.companytype = #{companytype}
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						company_id like '%' || upper(#{searchParam}) || '%'		
+					or	upper(companyname) like '%' || upper(#{searchParam}) || '%'		
+					or	upper(companydescription) like '%' || upper(#{searchParam}) || '%'
+				)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id desc
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="Company" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>	
+</mapper>

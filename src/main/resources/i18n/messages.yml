@@ -1,0 +1,56 @@
+login:
+  welcome-msg: 환영합니다!
+btn:
+  ok: 확인
+  cancel: 취소
+  close: 닫기
+  save: 저장
+  create: 생성
+  modify: 수정
+  delete: 삭제
+  search: 검색
+  reset: 초기화
+  new: 신규
+  prev: 이전
+  next: 다음
+  duplcheck: 중복확인
+msg:
+  alert: 경고
+  confirm: 확인해주세요.
+title:
+  seq: 번호
+  action: 실행
+  delyn: 삭제여부
+comm:
+  locale:
+    en: 영어
+    kr: 한국어
+program:
+  pid: 프로그램 ID
+  name: 프로그램 이름
+  type: 프로그램 형태
+  url: 프로그램 URL
+  use_yn: 사용 여부
+  auth_yn: 권한 적용
+  read: 읽기
+  write: 쓰기
+  excel: 엑셀
+  delete: 삭제
+  etc1: 기타1
+  etc2: 기타2
+  etc3: 기타3
+  etc4: 기타4
+codegroup:
+  cgid: 코드그룹 ID
+  cgname: 코드그룹명
+  cgdesc: 코드그룹 설명
+  use_yn: 사용 여부
+codedetail:
+  cgid: 코드그룹 ID
+  cdid: 코드상세 ID
+  cdname: 코드상세명
+  cddesc: 코드상세 설명
+  cdorder: 코드 순서
+  use_yn: 사용 여부
+menu: 결정필요
+cont: 콘텐츠도결정필요

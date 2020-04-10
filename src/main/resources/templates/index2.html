@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <title>Episode Framework</title>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densitydpi=medium-dpi" />
+    <meta content="#" name="Description" >
+    <meta content="#" name="Keywords" >
+    <meta name="description" content="#">
+    <link rel="stylesheet" type="text/css" href="#" />
+    <script type="text/javascript" src="/js/jquery-3.3.1.min.js"></script>
+    <style type="text/css">
+        *{margin:0;padding:0;}
+        body{padding:20px}
+        table{table-layout:fixed;width:100%;border-collapse:collapse;}
+        table th{background:#000;color:#fff;}
+        table th, table td{border:1px solid #ddd;padding:5px}
+        table th{padding:10px;}
+        table td{font-size:13px;}
+        table td.brd{border-top:2px solid #000;padding:0;}
+        table td:first-child{text-align:center;}
+        p{font-size:24px;font-weight:bold;color:#000;margin:0 0 10px 0;}
+        table tr:hover td{background:#fafafa;}
+        a{text-decoration:none}
+        .tab-list{position:relative; margin-bottom:20px;  text-align:center; border-top:1px solid #ddd; border-left:1px solid #ddd; background-color:#fff; overflow:hidden;}
+        .tab-list li {float:left; width:19.9%; height:50px; border-bottom:1px solid #ddd; border-right:1px solid #ddd; overflow:hidden;}
+        .tab-list li.on {position:relative; background-color:#000; font-weight:500; z-index:10;}
+        .tab-list li.on a{ color:#fff;}
+        .tab-list li a {display:table-cell; width:1%; height:50px; padding:0 8px; vertical-align:middle;font-size:16px;}
+        .tab-list:before {content:''; position:absolute; top:0; right:0; bottom:0; width:1px; background-color:#ddd;}
+        .tab-list:after {content:''; position:absolute; left:0; right:0; bottom:0; height:1px; background-color:#ddd;}
+        .tab-cont {display:none;}
+        .tab-list li:last-child{border-right:none;}
+    </style>
+    <script type="text/javascript">
+        $(function(){
+            $('.tab-list .on a').each(function() {
+                var tg = $(this).attr('href');
+                if (tg !== '#' && tg.charAt(0) === '#') {
+                    $(tg+'.tab-cont').show();
+                }
+            });
+            $(document).on('click', '.tab-list a', function() {
+                $(this).parent('li').addClass('on').siblings('li').removeClass('on');
+                var tg = $(this).attr('href');
+                if (tg === '#' || tg === '') {
+                    return false;
+                } else if (tg.charAt(0) === '#') {
+                    if ($(tg).hasClass('tab-cont')) {
+                        $(tg).show().siblings('.tab-cont').hide();
+                        return false;
+                    }
+                }
+            });
+        })
+    </script>
+</head>
+<body>
+<p>Episode 개발 목록</p>
+<ul class="tab-list">
+    <li class="on"><a href="#page1"><span>공통</span></a></li>
+    <li><a href="#page2"><span>포탈</span></a></li>
+    <li><a href="#page3"><span>모니터링</span></a></li>
+    <li><a href="#page4"><span>대시보드</span></a></li>
+    <li><a href="#page5"><span>API관리</span></a></li>
+</ul>
+<div class="tab-area">
+    <div id="page1" class="tab-cont">
+        <table cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col /><col /><col /><col /><col /><col />
+            </colgroup>
+            <tr>
+                <th>화면아이디</th>
+                <th>1depth</th>
+                <th>2depth</th>
+                <th>3depth</th>
+                <th>URL</th>
+                <th>비고</th>
+            </tr>
+            <tr>
+                <td></td>
+                <td>메인</td>
+                <td></td>
+                <td></td>
+                <td><a href="/protal/" target="_blank">/common/</a></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>코드관리</td>
+                <td></td>
+                <td></td>
+                <td><a href="javascript:" onclick="goPage('/common/code/index.do')">/common/code/index.do</a></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>프로그램관리</td>
+                <td></td>
+                <td></td>
+                <td><a href="javascript:" onclick="goPage('/common/program/index.do')">/common/program/index.do</a></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+        </table>
+    </div>
+    <div id="page2" class="tab-cont">
+        <table cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col /><col /><col /><col /><col /><col />
+            </colgroup>
+            <tr>
+                <th>화면아이디</th>
+                <th>1depth</th>
+                <th>2depth</th>
+                <th>3depth</th>
+                <th>URL</th>
+                <th>비고</th>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+        </table>
+    </div>
+    <div id="page3" class="tab-cont">
+        <table cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col /><col /><col /><col /><col /><col />
+            </colgroup>
+            <tr>
+                <th>화면아이디</th>
+                <th>1depth</th>
+                <th>2depth</th>
+                <th>3depth</th>
+                <th>URL</th>
+                <th>비고</th>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+        </table>
+    </div>
+    <div id="page4" class="tab-cont">
+        <table cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col /><col /><col /><col /><col /><col />
+            </colgroup>
+            <tr>
+                <th>화면아이디</th>
+                <th>1depth</th>
+                <th>2depth</th>
+                <th>3depth</th>
+                <th>URL</th>
+                <th>비고</th>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+        </table>
+    </div>
+    <div id="page5" class="tab-cont">
+        <table cellpadding="0" cellspacing="0">
+            <colgroup>
+                <col /><col /><col /><col /><col /><col />
+            </colgroup>
+            <tr>
+                <th>화면아이디</th>
+                <th>1depth</th>
+                <th>2depth</th>
+                <th>3depth</th>
+                <th>URL</th>
+                <th>비고</th>
+            </tr>
+            <tr>
+                <td class="brd" colspan="6"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+<script>
+    var goPage = function (page) {
+        top.location.href = page;
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : swcat-mapper.xml
+Description : 소프트웨어 카탈로그
+수정일     수정자  수정내용
+====       =====  ================
+2019.10.14 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.management.swcat.SwcatMapper">
+
+	<sql id="includeSql">
+		select	0 as chk
+			,	tb.*
+			,	getclassnm_fn(#{orgId}, tb.classstructure_id) as classstructure_nm	 
+			,	getusername_fn(tb.create_id) as create_nm
+			,	getusername_fn(tb.update_id) as update_nm
+			,	swcatname || ' ' || coalesce(swcatversion, '') as swcatfullname
+			,	(
+					case when isdomestic = 'true' then getLabel_fn('SWCAT', 'domestic', #{lang})
+						 else getLabel_fn('SWCAT', 'notdomestic', #{lang})	
+						 end
+				) as isdomestic_nm
+			,	(
+					case when ispromotetoci = 'true' then getLabel_fn('SWCAT', 'promotetoci', #{lang})
+						 else getLabel_fn('SWCAT', 'notpromotetoci', #{lang})	
+						 end
+				) as ispromotetoci_nm	
+			,	(
+					case when swcattype = 'PRODUCT' then 1
+					     when swcattype = 'VERSION' then 2
+						 when swcattype = 'RELEASE' then 3
+						 else  4 end
+				) as typeoderby	
+		from 	swcat tb
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='swcatIdD != null and swcatIdD != ""'>
+		and		upper(swcat_id) like '%' || upper(#{swcatIdD}) || '%'
+		</if>
+        <if test='classstructureD != null and classstructureD != ""'>
+		and		classstructure_id = #{classstructureD}
+        <!-- and		(		
+						upper(classstructure_id) like '%' || upper(#{classstructureD}) || '%'
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{classstructureD}) || '%'
+												)	
+				) -->
+		</if>
+		<if test='swcatnameD != null and swcatnameD != ""'>
+        and		upper(swcatname) like '%' || upper(#{swcatnameD}) || '%'
+		</if>
+		<if test='publishernameD != null and publishernameD != ""'>
+        and		upper(publishername) like '%' || upper(#{publishernameD}) || '%'
+		</if>
+		<if test='swcattypeD != null and swcattypeD != ""'>
+		and		upper(swcattype) like '%' || upper(#{swcattypeD}) || '%'
+		</if>
+		<if test='id != null and id != ""'>
+		and		id = #{id}
+		</if>
+		<if test='swcatId != null and swcatId != ""'>
+		and		swcat_id = #{swcatId}
+		</if>
+		<if test='swcattype != null and swcattype != ""'>
+		and		swcattype in
+				<foreach item="item" collection="swcattypeList" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+		<if test='swctr != null and swctr != ""'>
+			<if test='swctr.equals("FALSE")'>
+			and		classstructure_id is null
+			</if>
+			<if test='swctr.equals("TRUE")'>
+			and		classstructure_id is not null
+			</if>
+		</if>		
+		<!-- <if test='jobSwcat != null and jobSwcat != ""'>
+			<if test='jobSwcat.equals("undecided")'>
+			and 	classstructure_id is null
+			and		swcattype = 'PRODUCT'
+			</if>
+			<if test='jobSwcat.equals("confirm")'>
+			and 	classstructure_id is not null
+			and		swcattype = 'PRODUCT'
+			</if>
+		</if> -->
+		<if test='hierarchypath != null and hierarchypath != ""'>
+		and		hierarchypath like #{hierarchypath}||'%'
+		</if>
+		<if test='treeSearchParam != null and treeSearchParam != "" and treeSearchParam != "null"'>
+		and		classstructure_id in( 
+										select	classstructure_id
+										from	classancestor	
+										where	ancestor = #{treeSearchParam}
+									)	
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						swcat_id like '%' || #{searchParam} || '%'
+					or 	swcat_id =	(
+										select	split_part(tb1.hierarchypath||'/','/',2)
+										from	swcat tb1	
+										where	tb1.swcat_id like '%' || #{searchParam} || '%'									
+									)
+					or	upper(publishername) like '%' || upper(#{searchParam}) || '%' 			
+					or	upper(swcattype) like '%' || upper(#{searchParam}) || '%'		
+					or	upper(swcatname) like '%' || upper(#{searchParam}) || '%'		
+					or	upper(swcatdescription) like '%' || #{searchParam} || '%'		
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{searchParam}) || '%'
+												)	
+					or  isdomestic = 	(
+											case when getLabel_fn('SWCAT', 'domestic', #{lang}) like '%' || #{searchParam} || '%' then true
+												 when getLabel_fn('SWCAT', 'notdomestic', #{lang}) like '%' || #{searchParam} || '%' then false
+												 else null
+												 end
+										) 
+					or  ispromotetoci = 	(
+											case when getLabel_fn('SWCAT', 'promotetoci', #{lang}) like '%' || #{searchParam} || '%' then true
+												 when getLabel_fn('SWCAT', 'notpromotetoci', #{lang}) like '%' || #{searchParam} || '%' then false
+												 else null
+												 end
+										) 					
+				)	
+		</if>		
+
+		<if test='dialogParam != null and dialogParam != "" and dialogType == "relation"'>
+		and		not exists	(
+								select	1
+								from	swcatrel tb1
+								where	1=1
+								and		(
+												(
+														tb1.swcat_id1 = tb.swcat_id
+													and	tb1.swcat_id2 = #{dialogParam}
+												)	
+											or	(
+														tb1.swcat_id2 = tb.swcat_id
+													and	tb1.swcat_id1 = #{dialogParam}
+												)	
+										)
+							)	
+		and		tb.swcat_id != #{dialogParam}					
+		</if>
+
+		<if test='dialogParam != null and dialogParam != "" and dialogType == "group"'>
+		and		swcattype != 'GROUP'
+		and		not exists	(
+								select	1
+								from	swcatgrp tb1
+									,	swcat tb2
+								where	tb1.swcat_id = tb2.swcat_id
+								and		(
+												tb2.hierarchypath like '%'||tb.swcat_id||'%'
+											or	tb.hierarchypath like '%'||tb2.swcat_id||'%'	
+										)
+								and		tb1.swcatgrp_id = #{dialogParam}
+							)	
+		and		tb.swcat_id != #{dialogParam}					
+		</if>
+		
+		<if test='dialogParam != null and dialogParam != "" and dialogType == "swcat"'>
+		and		not exists	(
+								select	1
+								from	(
+											select  (
+                                                        case when tb2.swcat_id is null then tb1.swcat_id
+                                                             else tb2.swcat_id
+                                                             end
+                                                    ) swcat_id   
+												,	tb1.swcat_id as swcat_id_org 		
+                                            from    swliccat tb1
+                                            left  
+                                            join    swcatgrp tb2    
+                                            on      tb1.swcat_id = tb2.swcatgrp_id
+											where	tb1.swlicense_id = #{dialogParam}
+										) tb1
+									,	swcat tb2 
+								where	(
+												tb1.swcat_id = tb2.swcat_id
+											or 	tb1.swcat_id_org = tb2.swcat_id	
+										)	
+								and		(
+												tb2.hierarchypath like '%'||tb.swcat_id||'%'
+											or	tb.hierarchypath like '%'||tb2.swcat_id||'%'	
+										)
+							)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by classstructure_nm, publishername, swcatname, typeoderby, swcatversion, isdomestic
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="Swcat" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<select id="swcatId"  resultType="java.lang.String" parameterType="map">
+		select  getautonum_fn(#{orgId}, 'swcat', 'swcat_id') as swcat_id	
+	</select>
+
+	<select id="relationList"  resultType="Swcat" parameterType="map">
+		select	tb1.*
+			,	getclassnm_fn(#{orgId}, tb1.classstructure_id) as classstructure_nm 
+			,	getusername_fn(tb1.update_id) as update_nm
+			,	swcatname || ' ' || coalesce(swcatversion, '') as swcatfullname
+		from	swcat tb1
+			,	swcatrel tb2
+		where	tb1.swcat_id = tb2.swcat_id2
+		and		tb2.swcat_id1 = #{swcatId}
+
+		union all
+
+		select	tb1.*
+			,	getclassnm_fn(#{orgId}, TB1.classstructure_id) as classstructure_nm 
+			,	getusername_fn(tb1.update_id) as update_nm
+			,	swcatname || ' ' || coalesce(swcatversion, '') as swcatfullname
+		from	swcat tb1
+			,	swcatrel tb2
+		where   tb1.hierarchypath like '/' || tb2.swcat_id1 || '%'
+		and		tb2.swcat_id2 = #{swcatId}
+	</select>	
+
+	<select id="serverList"  resultType="CI" parameterType="map">
+		select  distinct tb4.*
+            ,   getusername_fn(tb4.manager_id) as manager_nm
+            ,   getclassnm_fn(tb4.org_id, tb4.classstructure_id) as classstructure_nm    
+        from    swcat tb1           
+           ,    (
+                    select  (
+                                case when tb2.swcat_id is null then tb1.swcat_id
+                                     else tb2.swcat_id
+                                     end
+                            ) as swcat_id
+                    from    swcat tb1
+                    left 
+                    join    swcatgrp tb2
+                    on      tb1.swcat_id = tb2.swcatgrp_id
+                    where   tb1.swcat_id = #{swcatId}
+                ) tb2
+            ,   cisw tb3    
+            ,   ci tb4
+        where   tb1.hierarchypath like '%'||tb2.swcat_id||'%'
+        and     tb1.swcat_id = tb3.swcat_id
+        and     tb3.ci_id = tb4.ci_id
+        and     tb3.islicnouse = 'false'
+	</select>
+
+	<select id="licenseList"  resultType="SwLicense" parameterType="map">	
+		select	distinct	
+				0 as chk
+			,	tb3.* 
+			,	getusername_fn(tb3.manager_id) as manager_nm
+			,	getusername_fn(tb3.update_id) as update_nm
+			,  	getdomainnm_fn('PURCHASETYPE', tb3.purchasetype)	as purchasetype_nm
+			,	getclassnm_fn(#{orgId}, tb3.swlictype) as swlictype_nm 	 
+		from	swcat tb1	
+			,	swliccat tb2
+			,	swlicense tb3
+		where	tb1.swcat_id = tb2.swcat_id
+		and		tb2.swlicense_id = tb3.swlicense_id
+		and     tb1.hierarchypath like '/'||#{swcatId}||'%'
+		order by id
+	</select>	
+
+	<select id="rootdata"  resultType="Swcat" parameterType="map">	
+		select  *
+		from    swcat tb
+		where   tb.swcat_id = split_part(#{hierarchypath},'/',2)		
+	</select>
+
+	<select id="childrendata"  resultType="Swcat" parameterType="map">	
+		select  *
+		from    swcat tb
+		where   tb.hierarchypath like '/'||#{swcatId}||'%'
+		and		tb.swcat_id	!= #{swcatId}	
+	</select>
+
+	<select id="groupList"  resultType="Swcat" parameterType="map">
+		select	tb1.*
+			,	tb2.id as grp_id
+			,	getclassnm_fn(#{orgId}, tb1.classstructure_id) as classstructure_nm 
+			,	getusername_fn(tb1.update_id) as update_nm
+			,	swcatname || ' ' || coalesce(swcatversion, '') as swcatfullname
+		from	swcat tb1
+			,	swcatgrp tb2
+		where	tb1.swcat_id = tb2.swcat_id
+		and		tb2.swcatgrp_id = #{swcatId}
+	</select>	
+
+	<select id="swcatData"  resultType="Map">
+		select	'JOBCI' as "cf"
+			,   getLabel_fn('ASSETDASHBOARD', 'swcatData','ko-kr') as "title"
+			,	(
+				select
+				count(*) as "undecided"
+				from swcat
+				where swcattype = 'PRODUCT'
+				and classstructure_id is null
+				),
+				(
+				select
+				count(*) as "confirm"
+				from swcat
+				where swcattype = 'PRODUCT'
+				and classstructure_id is not null
+				)
+	</select>	
+</mapper>

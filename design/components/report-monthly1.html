@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="no-js" lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<title></title>
+<meta name=”viewport” content=”width=device-width, initial-scale=1.0" />
+<meta name="description" content="">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="../assets/css/common.css" rel="stylesheet">
+</head>
+<body>
+<div id="app" class="wrapper">
+<section>
+<div class="content-wrap">
+<!-- report -->
+<div class="report-list-wrap">
+<!-- report detail -->
+<div class="report-detail">
+<div class="detail-wrap">
+
+
+
+
+
+
+
+
+
+
+
+<!-- report/monthly1 -->
+<div class="report-start"><!-- style="display: none" -->
+    <div class="header clearfix">
+        <span class="f">30 Apr 2019</span>
+        <span class="s">Monthly Report  -  April 2019</span>
+        <span class="t">Create by System</span>
+    </div>
+
+    <p class="line-title">Issues for Recent 6 Month</p>
+    <div class="issue-chart">
+        <canvas id="issueStackChart"></canvas>
+    </div>
+    <div class="custom_table-grid-sm">
+        <table class="notable">
+            <cologroup>
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+            </cologroup>
+            <thead>
+            <tr>
+                <th>Type</th>
+                <th>Dec</th>
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Apr</th>
+                <th>May</th>
+                <th>Total</th>
+                <th>Avg.</th>
+                <th>Percentage</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="l"><span class="sign type1"></span>Server</td>
+                <td>01</td>
+                <td>01</td>
+                <td>02</td>
+                <td>02</td>
+                <td>01</td>
+                <td>01</td>
+                <td>08</td>
+                <td>1.5</td>
+                <td>60%</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="line-title">Severity Level for Recent 6 Month</p>
+    <div class="issue-chart">
+        <canvas id="severityLevelChart"></canvas>
+    </div>
+    <div class="custom_table-grid-sm">
+        <table class="notable">
+            <cologroup>
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+            </cologroup>
+            <thead>
+            <tr>
+                <th>Type</th>
+                <th>Dec</th>
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Apr</th>
+                <th>May</th>
+                <th>Total</th>
+                <th>Avg.</th>
+                <th>Percentage</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="l"><span class="sign type5"></span>Critical</td>
+                <td>01</td>
+                <td>01</td>
+                <td>02</td>
+                <td>-</td>
+                <td>01</td>
+                <td>-</td>
+                <td>08</td>
+                <td>1.5</td>
+                <td>60%</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="line-title">Quantity & Time for Issues</p>
+    <div class="issue-chart">
+        <canvas id="quantityTimeChart"></canvas>
+    </div>
+    <div class="custom_table-grid-sm">
+        <table class="notable">
+            <cologroup>
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+            </cologroup>
+            <thead>
+            <tr>
+                <th></th>
+                <th>Jun</th>
+                <th>Jul</th>
+                <th>Aug</th>
+                <th>Sep</th>
+                <th>Oct</th>
+                <th>Nov</th>
+                <th>Dec</th>
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Apr</th>
+                <th>May</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="l">Quantity</td>
+                <td>24</td>
+                <td>40</td>
+                <td>20</td>
+                <td>32</td>
+                <td>24</td>
+                <td>15</td>
+                <td>32</td>
+                <td>10</td>
+                <td>37</td>
+                <td>19</td>
+                <td>20</td>
+                <td>10</td>
+            </tr>
+            <tr>
+                <td class="l">Time</td>
+                <td>09:21</td>
+                <td>12:18</td>
+                <td>08:52</td>
+                <td>09:30</td>
+                <td>15:21</td>
+                <td>20:11</td>
+                <td>09:33</td>
+                <td>11:29</td>
+                <td>22:30</td>
+                <td>16:41</td>
+                <td>08:02</td>
+                <td>06:42</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    
+</div>
+<!-- //report/monthly1 -->
+
+
+
+
+
+
+
+
+
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.js"></script>
+<script src="../assets/js/util.js"></script>
+<script src="../assets/js/custom.js"></script>
+<script>
+issuesStackChart();
+severityLevelChart();
+quantityTime();
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : topology-mapper.xml
+Description : 토폴로지 팝업 sql
+수정일     수정자  수정내용
+====       =====  ================
+2019.09.01 백승우  최초 생성
+-->	
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.topology.TopologyMapper">
+
+	<sql id="node">
+		select
+			id as uid 
+			<!-- ,cast(replace(ci_id,'CI','') as integer)  as id -->
+			,id as id
+			,ciname || ' / '|| getclassnm_fn(org_id, classstructure_id) || ' / ' || #{depth} as name
+			,(case when #{depth} = '0' then '#6610f2' else '#4dbd74' end ) as _color
+			,(case when #{depth} = '0' then '#6610f2' else '#4dbd74' end ) as original_color
+			,(case when #{depth} = '0' then cast( #{nodeSize} as integer ) * 1.5 else cast( #{nodeSize} as integer ) end ) as original_size
+			,ci_id as "ciId"
+			,(case when #{depth} = '0' then 'root' else 'children' end ) as "_cssClass"
+			,classstructure_id as "classstructureId"
+			,status
+			,'[]' as event
+			,#{depth} as depth
+			,'false' as connected
+			, exists (select 1 from disci where datasrc='BFI' and ci_id=ci.ci_id) bfi
+			, exists (select 1 from disci where datasrc='TADDM' and ci_id=ci.ci_id) taddm
+			, exists (select 1 from disci where datasrc='WATCHALL' and ci_id=ci.ci_id) watchall
+			<if test='useIcon != null and useIcon == "true"'>
+			  ,(select classiconsvg from classstructure where org_id=ci.org_id and classstructure_id=ci.classstructure_id) as "svgSym"
+			</if>
+		from ci
+	</sql>
+
+
+
+	<select id="getNode"  resultType="map" parameterType="map">
+		<include refid="node"/>
+		where org_id = 'KAI'
+		and ci_id = #{ciId}
+	</select>
+
+
+	<select id="getLinks"  resultType="map" parameterType="map">
+		select
+			id
+			<!-- 
+			,cast(replace(sourceci,'CI','') as integer) sid
+			,cast(replace(targetci,'CI','') as integer) tid
+			-->
+			,(select id from ci where org_id=cirelation.org_id and ci_id=sourceci) sid
+			,(select id from ci where org_id=cirelation.org_id and ci_id=targetci) tid
+			,'#73818f' _color
+			,'#73818f' original_color
+			,sourceci as  "sourceCi"
+			,targetci as  "targetCi"
+			,relationname as name
+			,status
+		from cirelation
+		where org_id='KAI'
+		and (sourceci = #{ciId} or targetci = #{ciId} )
+		<!-- and relationname ='CONNECT' -->
+		and relationname in ( ${convertedClasses} )
+		and end_dt <![CDATA[ >= ]]>  to_timestamp(#{standardDate}, 'yyyy-mm-dd')
+		<!-- and relationname in ('INCLUDE','VIRTUALIZE','CONNECT','RUN','DEPEND') -->
+		
+	</select>
+
+	<select id="getNodes"  resultType="map" parameterType="map">
+		<include refid="node"/>
+		inner join
+	    (select 
+			sourceci
+			,targetci
+		from cirelation
+		where org_id='KAI'
+		and relationname in ( ${convertedClasses} )
+		and end_dt <![CDATA[ >= ]]>  to_timestamp(#{standardDate}, 'yyyy-mm-dd')
+		<!-- and relationname in ('INCLUDE','VIRTUALIZE','CONNECT','RUN','DEPEND') -->
+		and (sourceci = #{ciId} or targetci = #{ciId})
+		) relation
+		on (ci.ci_id=relation.sourceci or ci.ci_id=relation.targetci) 
+		and ci.org_id='KAI'
+		where ci.ci_id != #{ciId}
+	</select>
+
+	<select id="getEvents"  resultType="map" parameterType="string">
+		select 
+			 event.id
+			,event.ci_id
+			,event.severity
+			,event.level
+			,(select value from domain where domain_id='SEVERITYCOLOR' and key=event.severity) as _color
+		from event
+		<!-- where ci_id in ( ${value} ) -->
+	</select>
+
+</mapper>

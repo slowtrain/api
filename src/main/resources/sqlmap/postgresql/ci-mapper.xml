@@ -1,0 +1,842 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : ci-mapper.xml
+Description : IT 자원
+수정일     수정자  수정내용
+====       =====  ================
+2019.08.27 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.resource.ci.CIMapper">
+
+	<sql id="includeSql">
+		select	1 as chk
+		<if test="srchtype != 'count'">
+			,	tb.* 
+			,	getusername_fn(tb.manager_id) as manager_nm
+			,	getusername_fn(tb.create_id) as create_nm
+			,	getusername_fn(tb.update_id) as update_nm
+			,	(
+					select	tb2.hierarchypath||'/' as hierarchypath
+					from	classstructure tb2
+					where	tb2.org_id = tb.org_id
+        			and     tb2.classstructure_id = tb.classstructure_id
+				) as hierarchypath
+			,	getclassnm_fn(tb.org_id, tb.classstructure_id) as classstructure_nm	 
+			,   exists (select 1 from disci tb1 where tb1.ci_id = tb.ci_id and tb1.datasrc = 'BFI') as isbfi
+            ,   exists (select 1 from disci tb1 where tb1.ci_id = tb.ci_id and tb1.datasrc = 'TADDM') as istaddm
+            ,   exists (select 1 from disci tb1 where tb1.ci_id = tb.ci_id and tb1.datasrc = 'WATCHALL') as iswhatchall
+			,   (select max(tb1.disci_id) from disci tb1 where tb1.ci_id = tb.ci_id and tb1.datasrc = 'WATCHALL') as ems_id
+			,	replace(replace(extaln17, '[', ''), ']', '') as hardwareip
+			,	replace(replace(extaln3, '[', ''), ']', '') as softwareip
+		</if>	
+		from 	ci tb
+		where 	1=1
+		and		exists 	(
+							select	1
+							from	classusewith tb1
+							where	tb1.org_id = tb.org_id
+							and		tb1.classstructure_id = tb.classstructure_id
+							and		tb1.object = 'CI'
+						)
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='orgId != null and orgId != ""'>
+		and		org_id = #{orgId}
+		</if>
+		<if test='ciId != null and ciId != ""'>
+		and		upper(ci_id) like '%' || upper(#{ciId}) || '%'
+		</if>
+		<if test='classstructure != null and classstructure != ""'>
+		and		classstructure_id = #{classstructure}
+		<!-- and		(
+						classstructure_id like '%' || upper(#{classstructure}) || '%'		
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	description like '%' || #{classstructure} || '%'
+												)		
+				)								 -->
+		</if>
+		<if test='ciname != null and ciname != ""'>
+		and		upper(ciname) like '%' || upper(#{ciname}) || '%'
+		</if>
+		<if test='description != null and description != ""'>
+		and		upper(description) like '%' || upper(#{description}) || '%'
+		</if>
+		<if test='itsmciid != null and itsmciid != ""'>
+		and		extaln18 like '%' || upper(#{itsmciid}) || '%'
+		</if>
+		<if test='status != null and status != ""'>
+		and		status = #{status}
+		</if>
+		<if test='ancestor != null and ancestor != ""'>
+		and		exists 		(
+							  select  1
+							  from 	  classancestor
+							  where   ancestor = any(regexp_split_to_array(UPPER(#{ancestor}), ','))
+							  and 	  classstructure_id = tb.classstructure_id
+							)
+		</if>
+		<if test='manager != null and manager != ""'>
+			<if test='manager.equals("FALSE")'>
+			and		extbool3 = false
+			</if>
+			<if test='manager.equals("TRUE")'>
+			and		extbool3 = true
+			</if>
+		</if>
+
+		<if test='scan != null and scan != ""'>
+			<if test='scan.equals("FALSE")'>
+        	and 	exists 	(
+                        		select 1 from disci where isdelete = false 
+                                            and ci_id=tb.ci_id and datasrc in ('BFI','TADDM') 
+                                            and discovery_dt  <![CDATA[ < ]]>  now() at time zone 'utc' - interval '14' day
+							)
+			</if>
+			<if test='scan.equals("TRUE")'>
+        	and 	exists 	(
+                        		select 1 from disci where isdelete = false 
+                                            and ci_id=tb.ci_id and datasrc in ('BFI','TADDM') 
+                                            and discovery_dt  <![CDATA[ >= ]]>  now() at time zone 'utc' - interval '14' day
+							)
+			</if>
+		</if>
+
+		<!-- <if test='scanCiType != null and scanCiType != ""'>
+        and 	exists 		(	
+								select 1 from classancestor where ancestor = #{scanCiType} and classstructure_id=tb.classstructure_id
+							) 
+        and 	exists 		(
+                        		select 1 from disci where isdelete = false 
+                                            and ci_id=tb.ci_id and datasrc in ('BFI','TADDM') 
+                                            and discovery_dt  <![CDATA[ < ]]>  now() at time zone 'utc' - interval '14' day
+							)
+		</if> -->
+
+		<if test='swlink != null and swlink != ""'>
+			<if test='swlink.equals("FALSE")'>
+			and  	not exists (
+								  select  1
+								  from 	  cirelation
+								  where   relationname = 'INCLUDE'
+								  and 	  targetci in ( select ci_id from ci c
+														where exists (
+																	  select  1
+																	  from 	  classancestor
+																	  where   ancestor = 'GROUP_1'
+																	  and 	  c.classstructure_id = classstructure_id
+																	 )
+													  )
+								  and 	  tb.ci_id = sourceci
+								)
+			and 	not exists (
+								  select  1
+								  from 	  cirelation
+								  where   relationname = 'INCLUDE'
+								  and 	  sourceci in (	select ci_id from ci c
+														where exists (
+																	  select  1
+																	  from 	  classancestor
+																	  where   ancestor = 'GROUP_1'
+																	  and 	  c.classstructure_id = classstructure_id
+																	 )
+													  )
+								  and     tb.ci_id = targetci
+								)
+			</if>
+			<if test='swlink.equals("TRUE")'>
+			and   ( exists (
+						 select * from cirelation
+			 			 where relationname = 'INCLUDE'
+			 			 and targetci in (
+						  				 select ci_id from ci c
+							  			 where exists (
+										   			  select * from classancestor
+							  						  where ancestor = 'GROUP_1'
+							  						  and c.classstructure_id = classstructure_id
+													  )
+							 			 )
+						 and tb.ci_id = sourceci
+						 )
+			or   exists (
+						 select * from cirelation
+				 		 where relationname = 'INCLUDE'
+				 		 and sourceci in (
+						  				 select ci_id from ci c
+								  	 	 where exists (
+													  select * from classancestor
+								  					  where ancestor = 'GROUP_1'
+								  					  and c.classstructure_id = classstructure_id
+										      		  )
+							 			)
+			 			 and tb.ci_id = targetci
+						)
+				)
+			</if>
+		</if>
+		<if test='treeSearchParam != null and treeSearchParam != "" and treeSearchParam != "null"'>
+		and		classstructure_id in( 
+										select	classstructure_id
+										from	classancestor	
+										where	ancestor = #{treeSearchParam}
+									)	
+		</if>
+		<if test='infraType != null and infraType != "" and infraType == "selected"'>
+		and		classstructure_id in( 
+										select	classstructure_id
+										from	classancestor	
+										where	ancestor = #{treeSearchParam}
+										and		classstructure_id = #{treeSearchParam}
+									)	
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						ci_id like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id like '%' || upper(#{searchParam}) || '%'		
+					or	upper(ciname) like '%' || upper(#{searchParam}) || '%'		
+					or	description like '%' || #{searchParam} || '%'
+					or	extaln17 like '%' || #{searchParam} || '%'
+					or	extaln18 like '%' || #{searchParam} || '%'
+					or	upper(extaln5) like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	description like '%' || #{searchParam} || '%'
+												)		
+				)	
+		</if>
+		<if test='ciDialogType != null and ciDialogType != "" and ciDialogType == "relation"'>
+		and 	not exists	(
+								select 	1
+								from 	cirelation tb1
+								where	1=1
+								and		tb1.org_id = tb.org_id	
+								and		tb1.targetci = tb.ci_id
+								and		tb1.org_id = #{orgId}
+								and  	tb1.sourceci = #{ciDialogParam}
+							)
+		and 	not exists	(
+								select 	1
+								from 	cirelation tb1
+								where	1=1
+								and		tb1.org_id = tb.org_id	
+								and		tb1.sourceci = tb.ci_id
+								and		tb1.org_id = #{orgId}
+								and  	tb1.targetci = #{ciDialogParam}
+							)					
+		and 	ci_id != 	#{ciDialogParam}	
+		and		status = 'ACTIVE'			
+		</if>
+
+		<if test='ciDialogType != null and ciDialogType != "" and ciDialogType == "ci"'>
+		and		classstructure_id in( 
+										select	classstructure_id
+										from	classancestor	
+										where	ancestor = #{ciDialogParam}
+									)	
+		</if>
+
+		<if test='ciDialogType != null and ciDialogType != "" and userName != null and userName != "" and ciDialogType == "userci"'>
+		and 	not exists	(
+								select 	1
+								from 	userci tb1
+								where	tb1.org_id = tb.org_id	
+								and		tb1.ci_id = tb.ci_id
+								and		tb1.org_id = #{orgId}
+								and		tb1.username = #{userName}
+							)
+		and		exists		(
+								select classstructure_id
+								from classancestor 
+								where ancestor in ( 
+								select classstructure_id from classancestor
+								where ancestor in ('SERVER', 'NETWORK', 'SW_DBSW', 'SW_MIDDLESW', 'BUSINESSSYSTEM', 'GROUP_1')
+								) 
+								and tb.classstructure_id = classstructure_id
+							) 
+		</if>
+
+		<if test='ciDialogType != null and ciDialogType != "" and ciDialogType == "disci"'>
+		and 	not exists	(
+								select	classstructure_id
+								from	disci tb1
+								where   1=1
+								and     tb1.datasrc = #{ciDialogParam}
+								and     tb1.ci_id = tb.ci_id 
+							)
+		</if>
+
+		<if test='orderBy != null and orderBy != "" and orderBy != "null" and srchtype != "count"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null" and srchtype != "count"'>
+		order by id
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="CI" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<select id="ciId"  resultType="java.lang.String" parameterType="map">
+		select  getautonum_fn(#{orgId}, 'ci', 'ci_id')	as ci_id	
+	</select>
+
+	<select id="ciExtNmData"  resultType="java.util.TreeMap" parameterType="map">
+		select 	getLabel_fn('CI', (case when tb1.extaln1 ='' then null else tb1.extaln1  end), #{lang}) AS extaln1
+			,	getLabel_fn('CI', (case when tb1.extaln2 ='' then null else tb1.extaln2  end), #{lang}) AS extaln2
+			,	getLabel_fn('CI', (case when tb1.extaln3 ='' then null else tb1.extaln3  end), #{lang}) AS extaln3
+			,	getLabel_fn('CI', (case when tb1.extaln4 ='' then null else tb1.extaln4  end), #{lang}) AS extaln4
+			,	getLabel_fn('CI', (case when tb1.extaln5 ='' then null else tb1.extaln5  end), #{lang}) AS extaln5
+			,	getLabel_fn('CI', (case when tb1.extaln6 ='' then null else tb1.extaln6  end), #{lang}) AS extaln6
+			,	getLabel_fn('CI', (case when tb1.extaln7 ='' then null else tb1.extaln7  end), #{lang}) AS extaln7
+			,	getLabel_fn('CI', (case when tb1.extaln8 ='' then null else tb1.extaln8  end), #{lang}) AS extaln8
+			,	getLabel_fn('CI', (case when tb1.extaln9 ='' then null else tb1.extaln9  end), #{lang}) AS extaln9
+			,	getLabel_fn('CI', (case when tb1.extaln10='' then null else tb1.extaln10 end), #{lang}) AS extaln10
+			,	getLabel_fn('CI', (case when tb1.extaln11='' then null else tb1.extaln11 end), #{lang}) AS extaln11
+			,	getLabel_fn('CI', (case when tb1.extaln12='' then null else tb1.extaln12 end), #{lang}) AS extaln12
+			,	getLabel_fn('CI', (case when tb1.extaln13='' then null else tb1.extaln13 end), #{lang}) AS extaln13
+			,	getLabel_fn('CI', (case when tb1.extaln14='' then null else tb1.extaln14 end), #{lang}) AS extaln14
+			,	getLabel_fn('CI', (case when tb1.extaln15='' then null else tb1.extaln15 end), #{lang}) AS extaln15
+			,	getLabel_fn('CI', (case when tb1.extaln16='' then null else tb1.extaln16 end), #{lang}) AS extaln16
+			,	getLabel_fn('CI', (case when tb1.extaln17='' then null else tb1.extaln17 end), #{lang}) AS extaln17
+			,	getLabel_fn('CI', (case when tb1.extaln18='' then null else tb1.extaln18 end), #{lang}) AS extaln18
+			,	getLabel_fn('CI', (case when tb1.extaln19='' then null else tb1.extaln19 end), #{lang}) AS extaln19
+			,	getLabel_fn('CI', (case when tb1.extaln20='' then null else tb1.extaln20 end), #{lang}) AS extaln20
+			,	getLabel_fn('CI', (case when tb1.extnum1 ='' then null else tb1.extnum1  end), #{lang}) AS extnum1
+			,	getLabel_fn('CI', (case when tb1.extnum2 ='' then null else tb1.extnum2  end), #{lang}) AS extnum2
+			,	getLabel_fn('CI', (case when tb1.extnum3 ='' then null else tb1.extnum3  end), #{lang}) AS extnum3
+			,	getLabel_fn('CI', (case when tb1.extnum4 ='' then null else tb1.extnum4  end), #{lang}) AS extnum4
+			,	getLabel_fn('CI', (case when tb1.extnum5 ='' then null else tb1.extnum5  end), #{lang}) AS extnum5
+			,	getLabel_fn('CI', (case when tb1.extdate1='' then null else tb1.extdate1 end), #{lang}) AS extdate1
+			,	getLabel_fn('CI', (case when tb1.extdate2='' then null else tb1.extdate2 end), #{lang}) AS extdate2
+			,	getLabel_fn('CI', (case when tb1.extdate3='' then null else tb1.extdate3 end), #{lang}) AS extdate3
+			,	getLabel_fn('CI', (case when tb1.extdate4='' then null else tb1.extdate4 end), #{lang}) AS extdate4
+			,	getLabel_fn('CI', (case when tb1.extdate5='' then null else tb1.extdate5 end), #{lang}) AS extdate5
+			,	getLabel_fn('CI', (case when tb1.extbool1='' then null else tb1.extbool1 end), #{lang}) AS extbool1
+			,	getLabel_fn('CI', (case when tb1.extbool2='' then null else tb1.extbool2 end), #{lang}) AS extbool2
+			,	getLabel_fn('CI', (case when tb1.extbool3='' then null else tb1.extbool3 end), #{lang}) AS extbool3
+			,	getLabel_fn('CI', (case when tb1.extbool4='' then null else tb1.extbool4 end), #{lang}) AS extbool4
+			,	getLabel_fn('CI', (case when tb1.extbool5='' then null else tb1.extbool5 end), #{lang}) AS extbool5
+		FROM	classstructure tb1
+		where   tb1.classstructure_id = #{classstructureId}
+	</select>
+
+	<select id="specSrchList"  resultType="Classspec" parameterType="map">
+		select  0 as chk
+			,	tb.*
+		from    classspec tb
+		where   not exists  (
+								select  1
+								from    cispec tb1
+								where   tb1.org_id = tb.org_id
+								and   	tb1.classstructure_id = tb.classstructure_id   
+								and     tb1.classspec_id = tb.classspec_id
+								and		tb1.ci_id = #{ciId}
+							)
+		and     tb.org_id = #{orgId}
+		and     tb.classstructure_id = #{classstructureId}
+		order by tb.id
+	</select> 
+
+	<select id="relationList"  resultType="CIrelation" parameterType="map">
+		select  #{ciId} as ciId
+			,	tb3.*
+			,	tb1.id as sourceci_id
+			,	tb2.id as targetci_id
+			,	tb1.ciname as sourceci_nm
+			,	tb2.ciname as targetci_nm
+			,	getclassnm_fn(tb1.org_id, tb1.classstructure_id) as sourceclass
+			,	getclassnm_fn(tb2.org_id, tb2.classstructure_id) as targetclass
+			,	getusername_fn(tb1.manager_id) as source_manager_nm
+			,	getusername_fn(tb2.manager_id) as target_manager_nm
+			,	exists 	(
+							select	1
+							from	classusewith tb
+							where	tb.org_id = tb3.org_id
+							and		tb.classstructure_id = (case when tb1.ci_id = #{ciId} then tb2.classstructure_id else tb1.classstructure_id end)
+							and		tb.object = 'CI'
+						) as move_flag
+		from    ci tb1
+			,	ci tb2
+			,   cirelation tb3
+		where   tb1.org_id = tb3.org_id
+		and 	tb1.ci_id = tb3.sourceci
+		and		tb2.org_id = tb3.org_id
+		and 	tb2.ci_id = tb3.targetci
+		and     (
+					(		
+								tb3.org_id = #{orgId}
+						and     tb3.sourceci = #{ciId}
+					)
+					or
+					(
+								tb3.org_id = #{orgId}
+						and     tb3.targetci = #{ciId}
+					)	
+				)
+		order by tb3.update_dt desc	
+	</select>   
+
+	<select id="relationTabList"  resultType="CI" parameterType="map">
+		select  tb1.*
+			,	tb2.relationname
+			,	getclassnm_fn(tb1.org_id, tb1.classstructure_id) as classstructure_nm
+		from    ci tb1
+			,	cirelation tb2
+		where   tb1.org_id = tb2.org_id
+		and 	tb1.ci_id = tb2.targetci
+		and     tb2.status = 'ACTIVE'
+		and		tb2.org_id = #{orgId}
+		and     tb2.sourceci = #{ciId}
+		
+		union all
+
+		select  tb1.*
+			,	tb2.relationname
+			,	getclassnm_fn(tb1.org_id, tb1.classstructure_id) as classstructure_nm
+		from    ci tb1
+			,	cirelation tb2
+		where   tb1.org_id = tb2.org_id
+		and 	tb1.ci_id = tb2.sourceci
+		and     tb2.status = 'ACTIVE'
+		and		tb2.org_id = #{orgId}
+		and     tb2.targetci = #{ciId}
+	</select>
+
+	<select id="relationSwList"  resultType="Swcat" parameterType="map">
+		<!-- select  getclassnm_fn(tb1.org_id, tb1.classstructure_id) as classstructure_nm -->
+		select  getclassnm_fn(tb1.org_id, (select classstructure_id from swcat where swcat_id = split_part(substring(tb1.hierarchypath,2),'/',1))) as classstructure_nm
+			,   tb1.*
+			,	tb2.id as cisw_id
+			,	tb2.start_dt
+			,	tb2.end_dt
+			,	tb2.islicnouse
+			,	tb2.licnusecause
+			,	tb2.detailedversion
+			,	tb2.discoverypath
+		from    swcat tb1
+			,   cisw tb2
+		where   1=1
+		and		tb1.org_id = tb2.org_id
+		and     tb1.swcat_id = tb2.swcat_id
+		and		tb2.org_id = #{orgId}
+		and		tb2.ci_id = #{ciId}
+		and		to_char(tb2.end_dt, 'YYYY') = '9999'
+	</select>
+
+	<select id="hisList"  resultType="CIhis" parameterType="map">
+		select 	0 AS CHK
+			,	tb.*
+			,	getusername_fn(tb.update_id) as update_nm
+		from 	cihis tb
+		where	tb.org_id = #{orgId}
+		and     tb.ci_id = #{ciId}
+		order by tb.update_dt desc
+	</select>
+
+	<select id="relationmapList"  resultType="CIrelationmap" parameterType="map">
+		select 	0 AS CHK
+			,	tb.*
+			,	getclassnm_fn(tb.org_id, tb.sourceclass) as sourceclass_nm
+			,	getclassnm_fn(tb.org_id, tb.targetclass) as targetclass_nm
+		from 	cirelationmap tb
+		order by id desc
+	</select>
+
+	<select id="relationmapCodeList"  resultType="map" parameterType="map">
+		select  distinct 
+				tb.relationname as key
+			,	tb.relationname as value
+        from    cirelationmap tb
+        where   tb.sourceclass = #{sourceclass}
+        and     tb.targetclass = #{targetclass}
+	</select>
+
+	<select id="rpaList"  resultType="map">
+		select c.id
+			 , c.classstructure_id as "classstructureId"
+			 , c.ciname
+			 , c.ci_id as "ciId"
+			 , c.org_id as "orgId"
+		from ci c
+		where exists ( select 1 from classancestor
+	  			       where ancestor = 'E2E'
+		               and ancestor != classstructure_id
+		               and c.classstructure_id = classstructure_id
+					 )
+		<if test='orgId != null and orgId != ""'>
+		and		org_id = #{orgId}
+		</if>
+	</select>
+
+	<select id="discimaptociList"  resultType="DisCIMapToCI">
+		select  tb.*
+			,   getclassnm_fn('KAI', tb.classstructure_id) as classstructure_nm         
+		from    discimaptoci tb
+		where	1=1
+		<if test='dataSrc != null and dataSrc != ""'>
+		and		dataSrc = #{dataSrc}
+		and		disCIType = #{disCIType}
+		and		disCIClass = #{disCIClass}	
+		<if test='!isvirtual'>
+		and		isvirtual = 'false'	 
+		</if>
+		<if test='isvirtual'>
+		and		isvirtual = 'true'	 
+		</if>
+		</if>
+		order by id desc
+	</select>
+
+	<select id="discicodeList"  resultType="map">
+		select  distinct
+		 		0 as chk ,
+		<if test='code != null and code != "" and code == "datasrc"'>
+				datasrc 
+		</if>
+		<if test='code != null and code != "" and code == "discitype"'>
+				discitype 
+		</if>
+		<if test='code != null and code != "" and code == "disciclass"'>
+				disciclass 
+		</if>		
+				as code
+		from    disci
+		where	
+		<if test='code != null and code != "" and code == "datasrc"'>
+				datasrc 
+		</if>
+		<if test='code != null and code != "" and code == "discitype"'>
+				discitype 
+		</if>
+		<if test='code != null and code != "" and code == "disciclass"'>
+				disciclass 
+		</if>				
+		is not null	
+		order by 
+		<if test='code != null and code != "" and code == "datasrc"'>
+				datasrc 
+		</if>
+		<if test='code != null and code != "" and code == "discitype"'>
+				discitype 
+		</if>
+		<if test='code != null and code != "" and code == "disciclass"'>
+				disciclass 
+		</if>
+	</select>
+
+	<select id="chkExistsDisci"  resultType="java.lang.Integer" parameterType="map">
+		select  count(*) as cnt
+		from    disci tb
+		where   tb.datasrc = #{dataSrc}
+		and     tb.discitype = #{disCIType}
+		and     tb.disciclass = #{disCIClass}
+		<if test='!isvirtual'>
+		and		isvirtual = 'false'	 
+		</if>
+		<if test='isvirtual'>
+		and		isvirtual = 'true'	 
+		</if>
+	</select>
+
+	<select id="getRelCi"  resultType="CI" parameterType="String">
+
+		select  c.*
+			,	getclassnm_fn(c.org_id, c.classstructure_id) as classstructure_nm	
+		from	ci c
+		where 	exists (
+						select  1														
+						from 	cirelation c1
+						where  	(c1.targetci = #{ciId} and c.ci_id = c1.sourceci and relationname = 'RUN')
+						or		(c1.sourceci = #{ciId} and c.ci_id = c1.targetci and relationname = 'RUN')
+						)
+
+		<!-- select  *
+		from	ci c
+		where 	exists (
+						select  c1.sourceci														
+						from 	cirelation c1
+							,	ci c2
+						where 	c1.targetci = c2.ci_id
+						and  	c1.targetci  = #{ciId}
+						and 	relationname = 'RUN'
+						and 	c.ci_id = c1.sourceci
+						)
+		or 		exists	(
+						select  c1.targetci														
+						from 	cirelation c1
+							,	ci c2
+						where 	c1.sourceci = c2.ci_id
+						and  	c1.sourceci  = #{ciId}
+						and 	relationname = 'RUN'
+						and 	c.ci_id = c1.targetci
+						)  -->
+	</select>
+
+	<select id="getItInfraSituation"  resultType="map" parameterType="string">
+		select	p.ancestor
+			,	(select id from classstructure where p.ancestor = classstructure_id) as id
+			,	case when p.ancestor != #{ancestor}	 then split_part(getclassnm_fn(p.org_id,p.ancestor),'(',1) else  getLabel_fn('ASSETDASHBOARD', 'etc','ko-kr') end  as "ancestorName"
+			,  count(*)	
+		from 	ci c
+			,	(
+					select  *
+					from	classancestor
+					where   ancestor in	(
+										select  classstructure_id
+										from 	classstructure
+										where 	parent = #{ancestor}	
+										)
+					or 		( ancestor = #{ancestor} and ancestor = classstructure_id)
+				) p
+		where c.classstructure_id = p.classstructure_id
+		group by p.ancestor, p.org_id
+	</select>
+
+	<select id="infraTot" resultType="java.lang.Integer" parameterType="string">
+		select  (	select count(*) as "cnt" from ci c
+					where exists ( select 1 from classancestor c1 where  ancestor = #{ancestor}
+																  and 	 c.classstructure_id = c1.classstructure_id)
+					and c.create_dt <![CDATA[ > ]]>  #{cTime}::timestamp)
+		- 
+				(	select count(*) as "cnt" from ci c
+					where exists ( select 1	from classancestor c1 where  ancestor = #{ancestor}
+																  and 	 c.classstructure_id = c1.classstructure_id)	
+					and c.update_dt <![CDATA[ > ]]>  #{cTime}::timestamp
+					and c.status = 'INACTIVE') as cnt
+	</select>
+
+	<sql id="itsmCISql">
+		select  tb.*
+			,	(
+					select 	tb1.ci_type_name
+					from 	if_itsm_wtcls tb1
+					where	tb1.ci_type_id = tb.ci_type_id
+				) as ci_type_nm	 
+		from    if_itsm_wtci tb	
+		where 	1=1
+		and		ci_type_id in	( 
+									select	tb1.ci_type_id
+									from	if_itsm_wtcls tb1	
+									where	tb1.depth_fullid like '/HARDWARE'||'%'
+								)	
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='kaiCiid != null and kaiCiid != "" and kaiCiid != "null"'>
+		and		kai_ciid = #{kaiCiid}
+		</if>
+		<if test='treeSearchParam != null and treeSearchParam != "" and treeSearchParam != "null"'>
+		and		ci_type_id in( 
+										select	tb1.ci_type_id
+										from	if_itsm_wtcls tb1	
+										where	tb1.depth_fullid like #{treeSearchParam}||'%'
+									)	
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						ci_id like '%' || upper(#{searchParam}) || '%'
+					or	ci_type_id like '%' || upper(#{searchParam}) || '%'		
+					or	kai_ciid like '%' || upper(#{searchParam}) || '%'		
+					or	upper(ci_name) like '%' || upper(#{searchParam}) || '%'		
+					or	usestatus like '%' || #{searchParam} || '%'
+					or	ci_type_id in 	(
+											select 	tb1.ci_type_id
+											from 	if_itsm_wtcls tb1
+											where	upper(tb1.ci_type_name) like '%' || upper(#{searchParam}) || '%'
+										)	
+				)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id
+		</if>
+	</sql>	
+
+	<select id="itsmCIList"  resultType="ItsmCI" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="itsmCISql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="itsmCIListTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="itsmCISql"/>
+				) tb1
+	</select>
+
+	<select id="itsmClassList" resultType="ItsmClass" parameterType="map">
+		select  tb.*
+		from    if_itsm_wtcls tb
+		where	tb.depth_fullid like '/HARDWARE%'
+		order by tb.depth_fullname
+	</select>
+
+	<select id="downtimeList" resultType="Eventdur" parameterType="map">
+		select  tb.*
+			,   floor(tb.duration_time/86400)||getlabel_fn('CI','day','ko-kr')||' '
+				||to_char(to_timestamp(cast(ceil(mod(tb.duration_time,86400)) as varchar),'SSSSS'),'HH24')||getlabel_fn('CI','hour','ko-kr')||' '
+				||to_char(to_timestamp(cast(ceil(mod(tb.duration_time,86400)) as varchar),'SSSSS'),'MI')||getlabel_fn('CI','minute','ko-kr')||' '
+				||to_char(to_timestamp(cast(ceil(mod(tb.duration_time,86400)) as varchar),'SSSSS'),'ss')||getlabel_fn('CI','second','ko-kr') as downtime
+		from    eventdur tb
+		where	ci_id = #{ciId}
+		order by origin_start_dt desc
+	</select>
+
+	<select id="mgConfirm" resultType="map">
+		select	'JOBCI' as "cf"
+			,	getLabel_fn('ASSETDASHBOARD', 'mgConfirmData','ko-kr') as "title"
+			,	(
+				select	count(*) as "undecided"
+				from ci c
+				where exists (select * from classancestor where (ancestor = 'SOFTWARE' or ancestor ='HARDWARE') and c.classstructure_id = classstructure_id)
+				and	c.extbool3 = false
+				),
+				(
+				select count(*) as "confirm"
+				from ci c
+				where exists (select * from classancestor where (ancestor = 'SOFTWARE' or ancestor ='HARDWARE') and c.classstructure_id = classstructure_id)
+				and	c.extbool3 = true
+				)
+	</select>
+
+	<select id="swLink" resultType="map">
+		select  'JOBCI' as "cf"
+			,	getLabel_fn('ASSETDASHBOARD', 'swLinkData','ko-kr') as "title"
+			,	(
+				select
+				count(*) as "undecided"
+				from ci c
+				where   exists (select * from classancestor where (ancestor = 'SW_DBSW' or ancestor ='SW_MIDDLESW_WAS') and c.classstructure_id = classstructure_id)
+				and  	not exists (
+									select * from cirelation
+									where relationname = 'INCLUDE'
+									and targetci in (
+													select ci_id from ci c
+													where exists (select * from classancestor where ancestor = 'GROUP_1' and c.classstructure_id = classstructure_id)
+													) and c.ci_id = sourceci
+									)
+				and 	not exists (
+									select * from cirelation
+									where relationname = 'INCLUDE'
+									and sourceci in (
+													select ci_id from ci c
+													where exists (select * from classancestor where ancestor = 'GROUP_1' and c.classstructure_id = classstructure_id)
+													) and c.ci_id = targetci
+									)
+				),
+				(
+				select
+				count(*) as "confirm"
+				from ci c
+				where exists ( select * from classancestor where (ancestor = 'SW_DBSW' or ancestor ='SW_MIDDLESW_WAS') and c.classstructure_id = classstructure_id)
+				and   exists (
+							 select * from cirelation
+				 			 where relationname = 'INCLUDE'
+				 			 and targetci in (
+							  				 select ci_id from ci c
+								  			 where exists (
+											   			  select * from classancestor
+								  						  where ancestor = 'GROUP_1'
+								  						  and c.classstructure_id = classstructure_id
+														  )
+								 			 )
+							 and c.ci_id = sourceci
+							 )
+				and	  exists ( select * from classancestor where (ancestor = 'SW_DBSW' or ancestor ='SW_MIDDLESW_WAS') and c.classstructure_id = classstructure_id)  
+				or	  exists (
+							 select * from cirelation
+					 		 where relationname = 'INCLUDE'
+					 		 and sourceci in (
+							  				 select ci_id from ci c
+									  	 	 where exists (
+														  select * from classancestor
+									  					  where ancestor = 'GROUP_1'
+									  					  and c.classstructure_id = classstructure_id
+											      		  )
+								 			)
+				 			 and c.ci_id = targetci
+							)
+				and	 exists (select * from classancestor where (ancestor = 'SW_DBSW' or ancestor ='SW_MIDDLESW_WAS') and c.classstructure_id = classstructure_id)
+				)		
+	</select>
+
+	<select id="convert" resultType="string" parameterType="string">
+		select 
+		coalesce(
+			(select convertedvalue from converter 
+			 where originalvalue = #{originalValue} 
+			 and converter_id = (select  converter_id from  conversion where tablename = #{tableName} and columnName = #{columnName} and classstructure_id = #{classstructureId} ))
+		,#{originalValue})
+	</select>
+
+	<select id="exetoolscode"  resultType="map" parameterType="map"> 
+		select  distinct tb.exetools as code
+		from    rparespraw tb
+		where   tb.exetools is not null
+		and   	tb.create_dt between now() - interval '7' day and now()
+		and		tb.exetools != ''
+		<if test='linebizId != null and linebizId != "" and linebizId != "null"'>
+		and		tb.linebiz_id = #{linebizId}
+		</if>
+	</select>
+
+	<select id="linebizstepcode"  resultType="map" parameterType="map">
+		select  distinct tb.linebizstep as code
+		from    rparespraw tb
+		where   tb.linebizstep is not null 
+		and   	tb.create_dt between now() - interval '7' day and now()
+		and		tb.linebizstep != ''
+		<if test='linebizId != null and linebizId != "" and linebizId != "null"'>
+		and		tb.linebiz_id = #{linebizId}
+		</if>
+	</select>
+
+	<select id="scanCI" resultType="map" parameterType="String" >
+        select  split_part(getclassnm_fn(org_id, #{scancitype}),'(',1) as "title"
+          	, 	count(*) as "cnt"
+			,	(select id from classstructure where #{scancitype} = classstructure_id) as id
+        from ci 
+        where exists (select 1 from classancestor where ancestor = #{scancitype} and classstructure_id=ci.classstructure_id) 
+        and exists (
+    	              select 1 from disci where isdelete = false 
+                      and ci_id=ci.ci_id and datasrc in ('BFI','TADDM') 
+                      and discovery_dt  <![CDATA[ < ]]>  now() at time zone 'utc' - interval '14' day
+					)
+		group by title
+	</select>
+
+	<select id="getClassstructureNm" resultType="String" parameterType="String" >
+		select getclassnm_fn(#{orgId}, #{classstructureId}) as classstructure_nm
+	</select>
+
+	
+</mapper>

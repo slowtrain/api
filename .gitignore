@@ -1,0 +1,12 @@
+HELP.md
+#.gradle
+frontend/apiportal/node_modules/
+frontend/design/node_modules/
+frontend/kai/node_modules/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.idea
+.gradle
+src/main/resources/static
+src/main/resources/application.yml
+

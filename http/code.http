@@ -1,0 +1,22 @@
+# For a quick start check out our HTTP Requests collection (Tools|HTTP Client|Open HTTP Requests Collection).
+#
+# Following HTTP Request Live Templates are available:
+# * 'gtrp' and 'gtr' create a GET request with or without query parameters;
+# * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
+# * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
+
+POST localhost/oauth/token
+Content-Type: application/x-www-form-urlencoded
+authorization: bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJFcGlzb2RlIEZyYW1ld29yayIsInN1YiI6Iu2FjOyKpO2EsCIsImlhdCI6MTU1MjY2MjE3NSwiZXhwIjoxNTUyNjY1Nzc1LCJqdGkiOiIiLCJhdWQiOiIifQ.bYL_gPzD5iHY40d4aEPh1wIbw7WgRWiZa8_ylHsqcwc
+
+grant_type=password&username=user1&password=1234
+
+### 로그인
+
+POST localhost/login
+Content-Type: application/x-www-form-urlencoded
+
+username=user1&password=1234
+
+### 코드그룹 목록 조회
+GET http://localhost/esapi/v1/code/groups

@@ -1,0 +1,11 @@
+        <soap:address location="http://icamlocal.koreaaero.com:8080/episode/ws/UserIntegration"/>
+        <soap:address location="http://icamdev.koreaaero.com/episode/ws/UserIntegration"/>
+        <soap:address location="http://icamprod.koreaaero.com/episode/ws/UserIntegration"/>
+
+        <soap:address location="http://icamlocal.koreaaero.com:8080/episode/ws/UserGroupIntegration"/>
+        <soap:address location="http://icamdev.koreaaero.com/episode/ws/UserGroupIntegration"/>
+        <soap:address location="http://icamprod.koreaaero.com/episode/ws/UserGroupIntegration"/>
+
+        <soap:address location="http://icamlocal.koreaaero.com:8080/episode/ws/SappoIntegration"/>
+        <soap:address location="http://icamdev.koreaaero.com/episode/ws/SappoIntegration"/>
+        <soap:address location="http://icamprod.koreaaero.com/episode/ws/SappoIntegration"/>

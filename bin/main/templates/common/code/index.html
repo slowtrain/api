@@ -1,0 +1,260 @@
+{% extends 'layout' %}
+
+{% block title %}{{ message('code.title') }}{% endblock %}
+
+{% block body %}
+<div class="title_wrap">
+    <p class="nav">Home > Admin > Code Mgmt.</p>
+    <h1>Code Management</h1>
+</div>
+<div class="srch_wrap">
+    <div class="srch_form">
+        <table>
+            <tr>
+                <th>Code Group</th>
+                <td>
+                    <select id="searchKey" class="w72">
+                        <option value="">--ALL--</option>
+                        <option value="100">Code</option>
+                        <option value="200">Name</option>
+                    </select>
+                    <input type="test" class="w400" id="searchVal">
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="btn_wrap row1">
+        <a href="javascript:;" class="btn_st1" onclick="CODE.searchGroup()"><span>{{ message('btn.search') }}</span></a>
+    </div>
+</div>
+<div class="code_wrap">
+    <div class="list_wrap">
+        <h2>Code Group</h2>
+        <div id="jqx-grid-group"></div>
+    </div>
+    <div class="edit_wrap">
+        <h2>Code Group</h2>
+        <form id="group-form" method="post">
+            <input type="hidden" id="group-method" name="_method"/>
+            <input type="hidden" id="okDuplGrpCd"/>
+            <table>
+                <tr class="grp-cd">
+                    <th><label for="grpCd">{{ message('codegroup.cgid') }}</label></th>
+                    <td><input type="text" name="grpCd" id="grpCd" data-check="R||regexp||숫자나 대문자로 20자 이내,[A-Z|0-9]{1,20}" readonly></td>
+                    <td><a href="javascript:;" class="btn_st1" onclick="CODE.checkDuplGrpCd()"><span>{{ message('btn.duplcheck') }}</span></a></td>
+                </tr>
+                <tr>
+                    <th><label for="grpNm">{{ message('codegroup.cgname') }}</label></th>
+                    <td colspan="2"><input type="text" name="grpNm" id="grpNm" data-check="R||length||2,50"></td>
+                </tr>
+                <tr>
+                    <th><label for="grpDesc">{{ message('codegroup.cgdesc') }}</label></th>
+                    <td colspan="2"><input type="text" name="grpDesc" id="grpDesc" data-check="R||length||2,200"></td>
+                </tr>
+                <tr>
+                    <th><label for="ext1Desc">{{ message('codegroup.ext_desc') }} 1</label></th>
+                    <td colspan="2"><input type="text" name="ext1Desc" id="ext1Desc" data-check="O||length||2,50" ></td>
+                </tr>
+                <tr>
+                    <th><label for="ext2Desc">{{ message('codegroup.ext_desc') }} 2</label></th>
+                    <td colspan="2"><input type="text" name="ext2Desc" id="ext2Desc" data-check="O||length||2,50" ></td>
+                </tr>
+                <tr>
+                    <th><label for="ext3Desc">{{ message('codegroup.ext_desc') }} 3</label></th>
+                    <td colspan="2"><input type="text" name="ext3Desc" id="ext3Desc" data-check="O||length||2,50" ></td>
+                </tr>
+                <tr>
+                    <th><span>{{ message('codegroup.use_yn') }}</span></th>
+                    <td colspan="2"><label for="useYnY"><input type="radio" name="grpUseYn" id="useYnY" value="Y" title="{{ message('codegroup.use_yn') }}" data-check="R"> 사용함</label> <label for="useYnN"><input type="radio" name="grpUseYn" id="useYnN" value="N" title="{{ message('codegroup.use_yn') }}" data-check="R"> 사용안함</label></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div style="float: right; margin-top: 15px;">
+        <a href="javascript:;" class="btn_st2" onclick="CODE.clearGroupForm()"><span>{{ message('btn.new') }}</span></a>
+        <a href="javascript:;" class="btn_st2" onclick="CODE.saveGroup()"><span>{{ message('btn.save') }}</span></a>
+        <a href="javascript:;" class="btn_st2" onclick="CODE.deleteGroup()"><span>{{ message('btn.delete') }}</span></a>
+    </div>
+</div>
+
+<!-- code detail -->
+<div class="code_wrap">
+    <div class="list_wrap">
+        <h2>Code Detail</h2>
+        <div id="jqx-grid-code"></div>
+    </div>
+    <div class="edit_wrap">
+        <h2>Code Detail</h2>
+        <form id="code-form" method="post">
+            <input type="hidden" id="code-method" name="_method"/>
+            <input type="hidden" id="okDuplCodeCd"/>
+            <table>
+                <tr class="code-cd">
+                    <th><label for="codeCd">{{ message('codedetail.cdid') }}</label></th>
+                    <td><input type="text" name="codeCd" id="codeCd" data-check="R||regexp||숫자나 대문자로 20자 이내,[A-Z|0-9]{1,20}" readonly></td>
+                    <td><a href="javascript:;" class="btn_st1" onclick="CODE.checkDuplCodeCd()"><span>{{ message('btn.duplcheck') }}</span></a></td>
+                </tr>
+                <tr>
+                    <th><label for="codeNm">{{ message('codedetail.cdname') }}</label></th>
+                    <td colspan="2"><input type="text" name="codeNm" id="codeNm" data-check="R||length||2,50"></td>
+                </tr>
+                <tr>
+                    <th><label for="codeDesc">{{ message('codedetail.cddesc') }}</label></th>
+                    <td colspan="2"><input type="text" name="codeDesc" id="codeDesc" data-check="O||length||2,200"></td>
+                </tr>
+                <tr>
+                    <th><label for="orderNo">{{ message('codedetail.cdorder') }}</label></th>
+                    <td colspan="2"><input type="text" name="orderNo" id="orderNo" data-check="O||int||1,1000"></td>
+                </tr>
+                <tr>
+                    <th><label for="subGrpCd">{{ message('codedetail.subgrp') }}</label></th>
+                    <td colspan="2"><select id="subGrpCd" name="subGrpCd"></select></td>
+                </tr>
+                <tr id="ext1-value">
+                    <th><label for="ext1Value"></label></th>
+                    <td colspan="2"><input type="text" name="ext1Value" id="ext1Value" data-check="O||length||1,100"></td>
+                </tr>
+                <tr id="ext2-value">
+                    <th><label for="ext2Value"></label></th>
+                    <td colspan="2"><input type="text" name="ext2Value" id="ext2Value" data-check="O||length||1,100"></td>
+                </tr>
+                <tr id="ext3-value">
+                    <th><label for="ext3Value"></label></th>
+                    <td colspan="2"><input type="text" name="ext3Value" id="ext3Value" data-check="O||length||1,100"></td>
+                </tr>
+                <tr>
+                    <th><span>{{ message('codedetail.use_yn') }}</span></th>
+                    <td colspan="2"><label for="useYnDY"><input type="radio" name="codeUseYn" id="useYnDY" value="Y" title="{{ message('codedetail.use_yn') }}" data-check="R"> 사용함</label> <label for="useYnDN"><input type="radio" name="codeUseYn" id="useYnDN" value="N" title="{{ message('codedetail.use_yn') }}" data-check="R"> 사용안함</label></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div style="float: right; margin-top: 15px;">
+        <a href="javascript:;" class="btn_st2" onclick="CODE.clearCodeForm()"><span>{{ message('btn.new') }}</span></a>
+        <a href="javascript:;" class="btn_st2" onclick="CODE.saveCode()"><span>{{ message('btn.save') }}</span></a>
+        <a href="javascript:;" class="btn_st2" onclick="CODE.deleteCode()"><span>{{ message('btn.delete') }}</span></a>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="/js/common/code.js"></script>
+
+<script>
+    $(document).ready(function(){
+        $('#ext1-value').hide();
+        $('#ext2-value').hide();
+        $('#ext3-value').hide();
+
+        $.ajax({
+            url: '/esapi/v1/code/groups',
+            headers: {'Authorization': 'Bearer ' + dejavu.getCookie('token')},
+            success: function(result) {
+                setSelectData('subGrpCd', result.list, {key:'grpCd', value:'grpNm'});
+            }
+        });
+
+        var dataAdapterGroup = new $.jqx.dataAdapter({
+            datatype: 'json',
+            url: '/esapi/v1/code/groups',
+            data: {
+                searchKey: $('#searchKey').val(),
+                searchVal: $('#searchVal').val()
+            },
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + dejavu.getCookie('token'));
+            }
+        });
+
+        $("#jqx-grid-group").jqxGrid({
+            width: '100%',
+            height: 260,
+            source: dataAdapterGroup,
+            editable: false,
+            pageable: true,
+            pagesize: 5,
+            pagesizeoptions: ['5', '10', '20'],
+            sortable: true,
+            selectionmode: 'singlerow',
+            columns: [
+                { text: '{{ message("codegroup.cgid") }}', datafield: 'grpCd', width: 200 },
+                { text: '{{ message("codegroup.cgname") }}', datafield: 'grpNm', width: 250 },
+                { text: '{{ message("codegroup.cgdesc") }}', datafield: 'grpDesc', width: 250 },
+                { text: '{{ message("codegroup.use_yn") }}', datafield: 'grpUseYn', width: 100}
+            ]
+        });
+
+        $('#jqx-grid-group').on('rowselect', function(event)  {
+            var currentIndex = event.args.rowindex;
+            var dataRow = $('#jqx-grid-group').jqxGrid('getrowdata', currentIndex);
+            $.ajax({
+                url: '/esapi/v1/code/groups/' + dataRow.grpCd,
+                headers: {'Authorization': 'Bearer ' + dejavu.getCookie('token')},
+                success: function(result) {
+                    CODE.getGroupData(result.data);
+                }
+            });
+            $('#jqx-grid-code').jqxGrid('refreshdata');
+        });
+
+        var dataAdapterCode = new $.jqx.dataAdapter({
+            datatype: 'json',
+            url: '/esapi/v1/code/codes/' + $('#grpCd').val() ? $('#grpCd').val() : '-NONE-',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + dejavu.getCookie('token'));
+            }
+        });
+
+        $("#jqx-grid-code").jqxGrid({
+            width: '100%',
+            height: 260,
+            source: dataAdapterCode,
+            editable: false,
+            pageable: true,
+            sortable: true,
+            pagesize: 5,
+            pagesizeoptions: ['5', '10', '20'],
+            selectionmode: 'singlerow',
+            columns: [
+                { text: '{{ message("codedetail.cdid") }}', datafield: 'codeCd', width: 150 },
+                { text: '{{ message("codedetail.cdname") }}', datafield: 'codeNm', width: 150 },
+                { text: '{{ message("codedetail.cddesc") }}', datafield: 'codeDesc', width: 150 },
+                { text: '{{ message("codedetail.cdorder") }}', datafield: 'orderNo', width: 150 },
+                { text: '{{ message("codedetail.use_yn") }}', datafield: 'codeUseYn', width: 80}
+            ]
+        });
+
+        $('#jqx-grid-code').bind('rowselect', function(event)  {
+            var currentIndex = event.args.rowindex;
+            var dataRow = $('#jqx-grid-code').jqxGrid('getrowdata', currentIndex);
+            $.ajax({
+                url: '/esapi/v1/code/codes/' + dataRow.grpCd + '/' + dataRow.codeCd,
+                headers: {'Authorization': 'Bearer ' + dejavu.getCookie('token')},
+                success: function(result) {
+                    CODE.getCodeData(result.data);
+                }
+            });
+        });
+    });
+
+    var setSelectData = function(id, list, option) {
+        var html = [];
+        if (option.defaultKey) {
+            var defaultKeys = option.defaultKey.split(',');
+        }
+        if (option.defaultLabel) {
+            html.push('<option value="">' + option.defaultLabel + '</option>');
+        } else if (option.defaultLabel != '') {
+            html.push('<option value="">= 선택 =</option>');
+        }
+        for (i = 0; i < list.length; i++) {
+            if (defaultKeys && defaultKeys.indexOf(list[i][option.key])) {
+                html.push('<option value="' + list[i][option.key] + '" selected>' +  list[i][option.value] + '</option>');
+            } else {
+                html.push('<option value="' + list[i][option.key] + '">' +  list[i][option.value] + '</option>');
+            }
+        }
+        $('#' + id).html(html.join(''));
+    };
+</script>
+{% endblock %}

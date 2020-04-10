@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.system.SystemCommonMapper">
+	
+    <select id="findOne" resultType="map" >
+        select * from  ${objectId} where id = #{uid}
+    </select>
+
+    <select id="isTrue" resultType="boolean" >
+        select exists (select * from ${object} where id = #{id} and ( ${sql} ) )
+    </select>
+
+	<select id="getNotifyObject" resultType="map" parameterType="string">
+        <if test='_parameter == "NOTI_CI_NEW" '>
+            select ci_id col1 
+            from ci  
+            where exists (select 1 from classancestor where ancestor in ('SERVER','SW_DBSW','SW_MIDDLESW') and classstructure_id=ci.classstructure_id) 
+            and create_dt <![CDATA[ > ]]> now() at time zone 'utc' - interval '1' day
+        </if>
+
+        <if test='_parameter == "NOTI_DISCI_NOTSCAN" '>
+            select 
+                ci_id col1
+            from ci 
+            where exists (select 1 from classancestor where ancestor in ('SERVER','SW_DBSW','SW_MIDDLESW') and classstructure_id=ci.classstructure_id) 
+            and exists (
+                        select 1 from disci where isdelete = false 
+                                            and ci_id=ci.ci_id and datasrc in ('BFI','TADDM') 
+                                            and discovery_dt <![CDATA[ < ]]> now() at time zone 'utc' - interval '14' day
+                                            and discovery_dt <![CDATA[ > ]]> now() at time zone 'utc' - interval '15' day
+                        )
+        </if>
+
+        <if test='_parameter == "NOTI_CI_INACTIVE" '>
+            select ci_id col1 
+            from ci  
+            where exists (select 1 from classancestor where ancestor in ('SERVER','SW_DBSW','SW_MIDDLESW') and classstructure_id=ci.classstructure_id) 
+            and update_dt <![CDATA[ > ]]> now() at time zone 'utc' - interval '1' day
+            and status='INACTIVE'
+        </if>
+
+        <if test='_parameter == "NOTI_EMS_DELETE" '>
+            select 
+                ci_id col1
+            from ci 
+            where exists (select 1 from disci where ci_id=ci.ci_id and datasrc ='WATCHALL' and isdelete=true and update_dt <![CDATA[ > ]]> now() at time zone 'utc' - interval '1' day) 
+        </if>
+
+    </select>
+</mapper>

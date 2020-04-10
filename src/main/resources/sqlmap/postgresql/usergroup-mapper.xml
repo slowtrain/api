@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.usergroup.UserGroupMapper">
+
+	<!-- UserGroup -->
+	<sql id="includeSql">
+		select	tb.*
+		   , 	getusername_fn(tb.create_id) as create_nm
+		   , 	getusername_fn(tb.update_id) as update_nm
+		from 	usergroup tb
+		where 	1=1
+		and		status = 'ACTIVE'
+		<if test="USERFILTER != null and USERFILTER != ''">
+			and ${USERFILTER}
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						upper(tb.usergroup_id) like '%' || upper(#{searchParam}) || '%'
+					or	upper(tb.description) like '%' || upper(#{searchParam}) || '%'
+				)	
+		</if>
+		<if test='groupSearch != null and groupSearch != "" and groupSearch != "null"'>
+		and		not exists (
+							select * from rolegroup where role_id = #{groupSearch} and tb.usergroup_id = usergroup_id 
+							)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id
+		</if>
+	</sql>	
+
+	<select id="userGroupList"  resultType="UserGroup" parameterType="map">
+		select 	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<!-- <select id="userGroupList"  resultType="UserGroup" parameterType="map">
+		select  id
+			,	org_id
+			,	usergroup_id
+			,	description
+			,	groupname_en
+			,	groupname_ko
+			,	create_dt
+			,	create_id
+			,	getusername_fn(create_id) as create_nm
+			,	status
+			,	update_dt
+			,	update_id
+			,	getusername_fn(update_id) as update_nm
+		from 	usergroup
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+			and ${USERFILTER}
+		</if>
+	</select> -->
+
+	<!-- userGroupAncestorList -->
+	<select id="userGroupAncestorList"  resultType="UserGroupAncestor" parameterType="map">
+		select
+			*
+		from usergroupancestor
+		where 1=1
+
+		<if test="USERFILTER != null and USERFILTER != ''">
+			and ${USERFILTER}
+		</if>
+	</select>
+
+	<select id="childDataCount"  resultType="map" parameterType="map">
+		select
+				(select count(*) from groupuser where usergroup_id=#{USERGROUPID}) groupuser
+
+	</select>
+
+	<!-- UserGroup User -->
+	<select id="groupUserList"  resultType="GroupUser" parameterType="map">
+		select *
+		from groupuser aa, esuser bb
+		where aa.username = bb.username
+
+		<if test="USERGROUPID != null and USERGROUPID != ''">
+			and usergroup_id = #{USERGROUPID}
+		</if>
+
+	</select>
+
+	<select id="users" resultType="User" parameterType="map">
+		select * from esuser
+		where 1=1
+		and	  status = 'ACTIVE'
+		<if test="GROUPUSERS != null and GROUPUSERS != ''">
+			and username not in (${GROUPUSERS})
+		</if>
+		<if test="username != null and username != ''">
+			and username = #{username}
+		</if>
+		<if test="orgId != null and orgId != ''">
+			and org_id = #{orgId}
+		</if>
+		<if test="usernameOrg != null and usernameOrg != ''">
+			and username not in ( select username from groupuser where usergroup_id = #{usernameOrg} )
+		</if>
+		<if test="usergroupId != null and usergroupId != ''">
+			and usergroup_id = #{usergroupId}
+		</if>
+	</select>
+
+	<select id="getGroupUserEmail"  resultType="string" parameterType="string">
+		select  
+			(select email from esuser where username=groupuser.username) email
+		from groupuser 
+		where org_id='KAI' and usergroup_id = #{value}
+		<!-- where ci_id in ( ${value} ) -->
+	</select>
+
+	<select id="getGroupUserSkype"  resultType="string" parameterType="string">
+		select username||'@koreaaero.com' skype
+		from groupuser 
+		where org_id='KAI' and usergroup_id = #{value}
+		<!-- where ci_id in ( ${value} ) -->
+	</select>
+	
+	<select id="getGroupChiefs"  resultType="string" >
+		select username from groupuser
+		where ischief=true
+		and usergroup_id in (select usergroup_id from groupuser where username=#{username})
+	</select>
+	
+</mapper>

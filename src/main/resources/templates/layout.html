@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>{% block title %}to MyWorld{% endblock %} : Episod</title>
+
+		<link rel="stylesheet" href="/css/default.css" />
+		<link rel="stylesheet" href="/js/jqwidgets/styles/jqx.base.css" />
+
+		<script src="/js/dejavu.js"></script>
+		<script src="/js/validator.js"></script>
+
+		<script src="/js/jquery-3.3.1.min.js"></script>
+		<script src="/js/jquery/jquery.serializeToJSON.js"></script>
+		<script src="/js/jqwidgets/jqxcore.js"></script>
+		<script src="/js/jqwidgets/jqxwindow.js"></script>
+	    <script src="/js/jqwidgets/jqxscrollbar.js"></script>
+
+    	<script src="/js/jqwidgets/jqxdata.js"></script>
+    	<script src="/js/jqwidgets/jqxbuttons.js"></script>
+    	<script src="/js/jqwidgets/jqxmenu.js"></script>
+    	<script src="/js/jqwidgets/jqxcheckbox.js"></script>
+    	<script src="/js/jqwidgets/jqxlistbox.js"></script>
+    	<script src="/js/jqwidgets/jqxdropdownlist.js"></script>
+    	<script src="/js/jqwidgets/jqxgrid.js"></script>
+    	<script src="/js/jqwidgets/jqxgrid.sort.js"></script>
+    	<script src="/js/jqwidgets/jqxgrid.pager.js"></script>
+    	<script src="/js/jqwidgets/jqxgrid.selection.js"></script>
+    	<script src="/js/jqwidgets/jqxgrid.edit.js"></script>
+		<script src="/js/jqwidgets/jqxloader.js"></script>
+{% block head %}
+{% endblock %}
+	</head>
+	<body>
+		<div class="wrap">
+			<div class="menu_wrap">
+				<div class="icon_menu_wrap"></div>
+				<div class="text_menu_wrap"></div>
+			</div>
+			<div class="body_wrap" >
+				<div class="gnb_wrap">gnb_wrap</div>
+				<div class="content_wrap">
+
+{% block body %}
+body
+{% endblock %}
+
+				</div>
+				<div class="footer_wrap">
+					<p>COPYRIGHT©2019, ITMSG, ALL RIGHTS RESERVED</p>
+				</div>
+
+			</div>
+			<a href="#" id="btn_menu" class="btn_menu">
+				<svg width="10" height="30">
+					<rect width="10" height="30" style="fill:rgb(150,150,150);stroke-width:1;stroke:rgb(100,100,100)" />
+					<text x="0" y="15" fill="gray" transform="rotate(90 5,15)">...</text>
+				</svg>
+			</a>
+		</div>
+        <script>
+			$(document).ready(function(){
+				var menu_status = true;
+
+				$('#btn_menu').click(function() {
+					if(menu_status) {
+						$(".menu_wrap").css("margin-left", "-250px");
+						$(".body_wrap").css("margin-left", "50px");
+						$(".icon_menu_wrap").css("margin-left", "250px");
+						$(".btn_menu").css("left", "50px");
+						menu_status = false;
+					} else {
+						$(".menu_wrap").css("margin-left", "0");
+						$(".body_wrap").css("margin-left", "300px");
+						$(".icon_menu_wrap").css("margin-left", "0");
+						$(".btn_menu").css("left", "300px");
+						menu_status = true;
+					}
+				});
+			});
+		</script>
+		{% block script %}
+
+		{% endblock %}
+	</body>
+</html>

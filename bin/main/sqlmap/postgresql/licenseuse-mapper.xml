@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : licenseuse-mapper.xml
+Description : 라이선스사용
+수정일     수정자  수정내용
+====       =====  ================
+2019.09.30 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.licensemgmnt.LicenseUseMapper">
+
+	<sql id="includeSql">
+        select  tb.*
+            ,   (
+                    case when swcattype = 'PRODUCT' then 1
+                        when swcattype = 'VERSION' then 2
+                        when swcattype = 'RELEASE' then 3
+                        else  4 end
+                ) as typeoderby 
+            ,   purchasenum - usenum  as remainnum
+        from    (
+                    select  tb6.swcat_id  
+                        ,   tb6.classstructure_id
+                        ,   getclassnm_fn(tb1.org_id, tb6.classstructure_id) as classstructure_nm
+                        ,   tb6.publishername
+                        ,   tb6.swcatname
+                        ,   tb6.swcattype
+                        ,   tb6.swcatversion
+                        ,   tb1.purchaseunit
+                        ,   tb6.hierarchypath
+                        ,   sum(distinct tb1.purchasenum) as purchasenum
+                        ,   count(distinct tb5.ci_id) as usesever
+                        ,   (
+                                sum ( 
+                                    case when tb1.purchaseunit = 'CPU' then tb5.extnum2
+                                        when tb1.purchaseunit = 'CORE' then tb5.extnum4
+                                        when tb1.purchaseunit = 'INSTALL' then 1
+                                        else 0
+                                        end
+                                    )
+                            ) as usenum                
+                        ,   count(distinct tb1.swlicense_id) as relationlicense   
+                    from    swlicense tb1
+                        ,   swliccat tb2
+                        ,   swcatgrp tb3
+                        ,   swcat tb4
+                        ,   (
+                            select    tb7.ci_id
+                                    ,   tb7.islicnouse   
+                                    ,   tb7.end_dt
+                                    ,   tb7.swcat_id
+                                    ,   tb8.extnum2
+                                    ,   tb8.extnum4
+                            from      cisw tb7
+                                    ,   ci tb8
+                            where     tb7.ci_id = tb8.ci_id  
+                            ) tb5                        
+                        ,   swcat tb6
+                    where   tb1.swlicense_id = tb2.swlicense_id
+                    and     tb2.swcat_id = tb3.swcatgrp_id
+                    and     tb4.hierarchypath like '%' || tb3.swcat_id || '%'
+                    and     tb4.swcat_id = tb5.swcat_id
+                    and     tb3.swcatgrp_id = tb6.swcat_id
+                    and     tb5.islicnouse = 'false'
+                    <!-- and     tb5.end_dt != '9999-12-31 23:59:59' -->
+                    and     to_char(tb5.end_dt, 'YYYY') = '9999' 
+                    <if test="USERFILTER != null and USERFILTER != ''">
+                    and     ${USERFILTER}
+                    </if>
+                    <if test='swcatIdD != null and swcatIdD != ""'>
+                    and		upper(tb6.swcat_id) like '%' || upper(#{swcatIdD}) || '%'
+                    </if>
+                    <if test='classstructureD != null and classstructureD != ""'>
+                    and		tb6.classstructure_id = #{classstructureD}
+                    <!-- and		(		
+                                    upper(tb6.classstructure_id) like '%' || upper(#{classstructureD}) || '%'
+                                or	tb6.classstructure_id in 	(
+                                                                    select 	classstructure_id
+                                                                    from 	classstructure tb
+                                                                    where	upper(description) like '%' || upper(#{classstructureD}) || '%'
+                                                                )	
+                            ) -->
+                    </if>
+                    <if test='swcatnameD != null and swcatnameD != ""'>
+                    and		upper(tb6.swcatname) like '%' || upper(#{swcatnameD}) || '%'
+                    </if>
+                    <if test='publishernameD != null and publishernameD != ""'>
+                    and		upper(tb6.publishername) like '%' || upper(#{publishernameD}) || '%'
+                    </if>
+                    <if test='swcattypeD != null and swcattypeD != ""'>
+                    and		upper(tb6.swcattype) like '%' || upper(#{swcattypeD}) || '%'
+                    </if>
+                    <if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+                    and     (
+                                    tb6.swcat_id like '%' || upper(#{searchParam}) || '%'
+                                or  tb6.classstructure_id like '%' || upper(#{searchParam}) || '%'      
+                                or  tb6.classstructure_id in 	(
+                                                                    select 	classstructure_id
+                                                                    from 	classstructure tb
+                                                                    where	description like '%' || #{searchParam} || '%'
+                                                                )	
+                                or  upper(tb6.publishername) like '%' || upper(#{searchParam}) || '%'     
+                                or  upper(tb6.swcatname) like '%' || upper(#{searchParam}) || '%'
+                                or  tb6.swcattype like '%' || upper(#{searchParam}) || '%'     
+                                or  tb1.purchaseunit like '%' || upper(#{searchParam}) || '%'       
+                            )   
+                    </if>
+                    group by
+                            tb1.org_id
+                        ,   tb6.swcat_id    
+                        ,   tb6.classstructure_id
+                        ,   tb6.publishername
+                        ,   tb6.swcatname
+                        ,   tb6.swcattype
+                        ,   tb6.swcatversion
+                        ,   tb1.purchaseunit
+                        ,   tb6.hierarchypath            
+                    union all
+                    select  tb5.swcat_id  
+                        ,   tb5.classstructure_id
+                        ,   getclassnm_fn(tb1.org_id, tb5.classstructure_id) as classstructure_nm
+                        ,   tb5.publishername
+                        ,   tb5.swcatname
+                        ,   tb5.swcattype
+                        ,   tb5.swcatversion
+                        ,   tb1.purchaseunit
+                        ,   tb5.hierarchypath
+                        ,   sum(distinct tb1.purchasenum) as purchasenum
+                        ,   count(distinct tb4.ci_id) as usesever
+                        ,   (
+                                sum ( 
+                                    case when tb1.purchaseunit = 'CPU' then tb4.extnum2
+                                        when tb1.purchaseunit = 'CORE' then tb4.extnum4
+                                        when tb1.purchaseunit = 'INSTALL' then 1
+                                        else 0
+                                        end
+                                    )
+                            ) as usenum  
+                        ,   count(distinct tb1.swlicense_id) as relationlicense
+                    from    swlicense tb1
+                        ,   swliccat tb2
+                        ,   swcat tb3
+                        ,   (
+                            select    tb7.ci_id
+                                    ,   tb7.islicnouse   
+                                    ,   tb7.end_dt
+                                    ,   tb7.swcat_id
+                                    ,   tb8.extnum2
+                                    ,   tb8.extnum4
+                            from      cisw tb7
+                                    ,   ci tb8
+                            where     tb7.ci_id = tb8.ci_id  
+                            ) tb4
+                        ,   swcat tb5
+                    where   tb1.swlicense_id = tb2.swlicense_id
+                    and     tb3.hierarchypath like '%' || tb2.swcat_id || '%'
+                    and     tb3.swcat_id = tb4.swcat_id
+                    and     tb2.swcat_id = tb5.swcat_id
+                    and     tb4.islicnouse = 'false'
+                    <!-- and     tb4.end_dt != '9999-12-31 23:59:59' -->
+                    and     to_char(tb4.end_dt, 'YYYY') = '9999' 
+                    <if test="USERFILTER != null and USERFILTER != ''">
+                    and     ${USERFILTER}
+                    </if>
+                    <if test='swcatIdD != null and swcatIdD != ""'>
+                    and		upper(tb5.swcat_id) like '%' || upper(#{swcatIdD}) || '%'
+                    </if>
+                    <if test='classstructureD != null and classstructureD != ""'>
+                    and		tb5.classstructure_id = #{classstructureD}
+                    <!-- and		(		
+                                    upper(tb6.classstructure_id) like '%' || upper(#{classstructureD}) || '%'
+                                or	tb6.classstructure_id in 	(
+                                                                    select 	classstructure_id
+                                                                    from 	classstructure tb
+                                                                    where	upper(description) like '%' || upper(#{classstructureD}) || '%'
+                                                                )	
+                            ) -->
+                    </if>
+                    <if test='swcatnameD != null and swcatnameD != ""'>
+                    and		upper(tb5.swcatname) like '%' || upper(#{swcatnameD}) || '%'
+                    </if>
+                    <if test='publishernameD != null and publishernameD != ""'>
+                    and		upper(tb5.publishername) like '%' || upper(#{publishernameD}) || '%'
+                    </if>
+                    <if test='swcattypeD != null and swcattypeD != ""'>
+                    and		upper(tb5.swcattype) like '%' || upper(#{swcattypeD}) || '%'
+                    </if>
+                    <if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+                    and     (
+                                    tb5.swcat_id like '%' || upper(#{searchParam}) || '%'
+                                or  tb5.classstructure_id like '%' || upper(#{searchParam}) || '%'      
+                                or  tb5.classstructure_id in 	(
+                                                                    select 	classstructure_id
+                                                                    from 	classstructure tb
+                                                                    where	description like '%' || #{searchParam} || '%'
+                                                                )	
+                                or  upper(tb5.publishername) like '%' || upper(#{searchParam}) || '%'     
+                                or  upper(tb5.swcatname) like '%' || upper(#{searchParam}) || '%'
+                                or  tb5.swcattype like '%' || upper(#{searchParam}) || '%'     
+                                or  tb1.purchaseunit like '%' || upper(#{searchParam}) || '%'       
+                            )   
+                    </if>
+                    group by
+                            tb1.org_id
+                        ,   tb5.swcat_id    
+                        ,   tb5.classstructure_id
+                        ,   tb5.publishername
+                        ,   tb5.swcatname
+                        ,   tb5.swcattype
+                        ,   tb5.swcatversion
+                        ,   tb1.purchaseunit
+                        ,   tb5.hierarchypath
+                ) tb	
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by publishername, swcatname, split_part(hierarchypath||'/','/',2), typeoderby, swcatversion
+		</if>					
+	</sql>	
+
+	<select id="list"  resultType="Swcat" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1				
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<select id="serverList"  resultType="CI" parameterType="map">
+        select  distinct tb4.*
+            ,   getusername_fn(tb4.manager_id) as manager_nm
+            ,   getclassnm_fn(tb4.org_id, tb4.classstructure_id) as classstructure_nm    
+        from    swcat tb1           
+           ,    (
+                    select  (
+                                case when tb2.swcat_id is null then tb1.swcat_id
+                                     else tb2.swcat_id
+                                     end
+                            ) as swcat_id
+                        ,   tb1.org_id
+                        ,   tb1.swlicense_id
+                    from    swliccat tb1
+                    left 
+                    join    swcatgrp tb2
+                    on      tb1.swcat_id = tb2.swcatgrp_id
+                    where   tb1.swcat_id = #{swcatId}
+                ) tb2
+            ,   cisw tb3    
+            ,   ci tb4
+        where   tb1.hierarchypath like '%'||tb2.swcat_id||'%'
+        and     tb1.swcat_id = tb3.swcat_id
+        and     tb3.ci_id = tb4.ci_id
+        and     tb3.islicnouse = 'false'
+	</select>
+
+</mapper>

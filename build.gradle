@@ -1,0 +1,102 @@
+plugins {
+    id 'war'
+    id 'java'
+    id 'java-library'
+    //id 'maven'
+    //id 'maven-publish'
+    id 'org.springframework.boot' version '2.1.6.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.7.RELEASE'
+}
+
+
+
+group = 'com.itmsg'
+version = ''
+//version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    //maven {
+    //    //url = 'http://repo.maven.apache.org/maven2'
+    //}
+}
+
+bootRun { 
+    sourceResources sourceSets.main 
+}
+
+dependencies {
+
+    implementation 'org.springframework.boot:spring-boot-dependencies:2.1.6.RELEASE'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.0.0'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.4.1'
+    implementation 'org.springframework.security.oauth:spring-security-oauth2:2.3.5.RELEASE'
+    implementation 'org.springframework.security:spring-security-jwt:1.0.10.RELEASE'
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
+    implementation 'net.rakugakibox.util:yaml-resource-bundle:1.1'
+    implementation 'io.pebbletemplates:pebble-spring-boot-2-starter:3.0.8'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:2.1.6.RELEASE"
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor:2.1.6.RELEASE"
+    //runtimeOnly 'org.springframework.boot:spring-boot-devtools:2.1.6.RELEASE'
+    //testImplementation 'org.springframework.boot:spring-boot-starter-test:2.1.6.RELEASE'
+
+    implementation 'javax.xml.bind:jaxb-api:2.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-security:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-cache:2.1.6.RELEASE'
+    //implementation 'org.springframework.boot:spring-boot-devtools:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-aop:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc:2.1.6.RELEASE'
+    // implementation 'org.springframework.boot:spring-boot-starter-parent:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket:2.1.6.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-web-services:2.1.6.RELEASE'
+    implementation 'wsdl4j:wsdl4j:1.6.1'
+    
+    //implementation 'org.quartz-scheduler:quartz:2.3.1'
+    //implementation 'org.springframework.boot:spring-boot-starter-quartz:2.1.6.RELEASE'
+    // if you make war  add line
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat:2.1.6.RELEASE'
+    //implementation 'org.springframework.boot:spring-boot-starter-tomcat:2.1.6.RELEASE'
+    
+
+    //implementation 'org.springframework.ws:spring-ws-core:3.0.7.RELEASE'
+    //implementation 'org.jvnet.jaxb2.maven2:maven-jaxb2-plugin:0.14.0'
+    //implementation 'org.apache.httpcomponents:httpclient:4.5.9'
+    //implementation 'com.sun.xml.bind:jaxb-xjc:2.3.2'
+
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
+    implementation 'com.google.code.findbugs:findbugs:3.0.1'
+    //runtime 'com.h2database:h2:1.4.197'
+    //testCompile 'org.springframework.boot:spring-boot-starter-test:2.0.3.RELEASE'
+    //testCompile 'org.springframework.security:spring-security-test:5.0.6.RELEASE'
+
+    implementation 'org.postgresql:postgresql:42.2.5'
+    implementation 'org.json:json:20180813'
+	
+	implementation 'org.python:jython-standalone:2.7.1'
+	implementation 'mysql:mysql-connector-java:8.0.19'
+
+    // https://mvnrepository.com/artifact/org.mybatis.spring.boot/mybatis-spring-boot-autoconfigure
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-autoconfigure:2.1.1'
+    
+}
+
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

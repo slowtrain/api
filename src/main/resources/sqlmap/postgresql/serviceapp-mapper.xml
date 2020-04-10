@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.servicemgmnt.serviceapp.ServiceAppMapper">
+<!--
+SQL File Name : serviceapp-mapper.xml
+Description : 어플리케이션 손실비용
+수정일     수정자  수정내용
+====       =====  ================
+2019.11.25 이정호  최초 생성
+-->
+
+	<select id="getAppSystem"  resultType="map" parameterType="map">
+		select  distinct(eventapp.ci_id) as "ciId"				
+			,	false as chk
+			, 	ci.ciname
+			, 	ci.classstructure_id as "classstructureId"
+			,	getclassnm_fn(ci.org_id, ci.classstructure_id) as "classstructureNm"
+			, 	ci.description as "description"
+		from
+		eventapp inner join ci 
+		on eventapp.ci_id = ci.ci_id
+		where	eventapp.coll_dt   <![CDATA[ >= ]]>   date_trunc('day', #{startDate}::timestamp) 
+		and 	eventapp.coll_dt   <![CDATA[ <  ]]>   date_trunc('day', #{endDate}::timestamp + interval  '1 day' ) 
+	</select>
+
+
+	<select id="getServiceAppList"  resultType="EventApp" parameterType="map">
+		select  coll_dt
+			,	ci.ci_id	
+			, 	ci.ciname
+			,	total_time
+			, 	ci.classstructure_id
+			,	getclassnm_fn(ci.org_id, ci.classstructure_id) as classstructure_nm
+			,	#{avgWageRate}::integer * coalesce(ci.extnum1, 0) * round((total_time::float / (8 * 3600))::numeric, 2) as loss_cost
+		from
+		eventapp inner join ci 
+		on eventapp.ci_id = ci.ci_id
+
+		<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+		where	eventapp.coll_dt   <![CDATA[ >= ]]>   date_trunc('day', #{startDate}::timestamp) 
+		and 	eventapp.coll_dt   <![CDATA[ <  ]]>   date_trunc('day', #{endDate}::timestamp + interval  '1 day' )
+		</if>
+
+		<if test='app != null and app != ""'>
+		and 	ci.ci_id in
+				<foreach item="item" collection="appArr" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						upper(ci.ciname) like '%' || upper(#{searchParam}) || '%'
+					or	ci.ci_id like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{searchParam}) || '%'
+												)		
+				)	
+		</if>
+
+		<if test='orderBy != null and orderBy != ""'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				DESC
+			</if>
+		</if>
+
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))	
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		
+		select  count(eventapp.*) AS CNT
+		from
+		eventapp inner join ci 
+		on eventapp.ci_id = ci.ci_id
+
+		<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+		where	eventapp.coll_dt   <![CDATA[ >= ]]>   date_trunc('day', #{startDate}::timestamp) 
+		and 	eventapp.coll_dt   <![CDATA[ <  ]]>   date_trunc('day', #{endDate}::timestamp + interval  '1 day' )
+		</if>
+
+		<if test='app != null and app != ""'>
+		and 	ci.ci_id in
+				<foreach item="item" collection="appArr" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						upper(ci.ciname) like '%' || upper(#{searchParam}) || '%'
+					or	ci.ci_id like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id like '%' || upper(#{searchParam}) || '%'
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{searchParam}) || '%'
+												)	
+				)	
+		</if>		
+
+	</select>
+
+
+
+	<select id="appData"  resultType="map" parameterType="map">
+
+		select  t.ci_id as "ciId"
+			,	array_agg(t.total_time order by t.coll_dt) as "totalTime"
+			,	array_agg(t.coll_dt order by t.coll_dt) as "collDt"
+		from 	(		
+				select  (select distinct(c.ciname) from ci c, eventapp e where c.ci_id = e.ci_id and c.ci_id = #{ciId}) as ci_id
+					, 	coalesce(p.total_time, 0) as total_time
+					, 	coalesce(p.coll_dt, d.coll_dt) as coll_dt
+		 		from	(		
+							select  c.ciname
+								,   e.total_time
+								,	e.coll_dt
+							from 	eventapp e
+								,	ci c
+							where 	c.ci_id = #{ciId}
+							and		e.ci_id = c.ci_id
+							<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+							and		e.coll_dt   <![CDATA[ >= ]]>   date_trunc('day', #{startDate}::timestamp) 
+							and 	e.coll_dt   <![CDATA[ <  ]]>   date_trunc('day', #{endDate}::timestamp + interval  '1 day' )
+							</if>
+							group by  e.total_time, e.coll_dt, c.ciname
+							order by e.coll_dt
+						) p
+				full outer join
+						(
+							select	e.coll_dt
+							from 	eventapp e
+							where 	e.ci_id in
+							<foreach item="item" collection="appArr" open="(" separator="," close=")">
+							#{item}
+							</foreach>
+							<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+							and		e.coll_dt   <![CDATA[ >= ]]>   date_trunc('day', #{startDate}::timestamp) 
+							and 	e.coll_dt   <![CDATA[ <  ]]>   date_trunc('day', #{endDate}::timestamp + interval  '1 day' )
+							</if>
+							group by  e.coll_dt
+							order by coll_dt
+						) d
+				on (p.coll_dt = d.coll_dt)
+				)  t
+		group by t.ci_id		
+
+	</select>
+
+</mapper>

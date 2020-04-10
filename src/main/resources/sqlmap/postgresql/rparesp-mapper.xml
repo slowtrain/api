@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.e2e.RparespMapper">
+<!--
+SQL File Name : rparesp-mapper.xml
+Description : RPA 데이터
+수정일     수정자  수정내용
+====       =====  ================
+2019.08.23 이정호  최초 생성
+-->
+
+	<select id="getRpaSystem"  resultType="map" parameterType="map">
+
+		select  c1.ci_id as "ciId"
+			,	l.location_id as "locationId"
+			,	l.namekor
+		from	ci c1
+			, 	location l
+		where 	c1.location_id = l.location_id
+		and 	classstructure_id = 'RPASYSTEM'
+		and		c1.status = 'ACTIVE'
+
+
+	</select>
+
+	<select id="getBizList"  resultType="map" parameterType="map">
+
+		select	false as chk  
+			,	id
+			,	ci_id as "ciId"
+			,	ciname
+			,	classstructure_id as "classstructureId"
+			,	getclassnm_fn(ci.org_id, ci.classstructure_id) as "classstructureNm"
+			, 	ci.description as "description"
+		from	ci
+		where 	classstructure_id = 'RPAAPPLICATION'
+		and		status = 'ACTIVE'
+		order by ci_id
+
+	</select>
+
+
+	<select id="getBizDt"  resultType="map">
+
+		select  max(robot_dt) as "bizDt"
+		from
+		rparesp
+
+	</select>
+
+
+	<select id="getLocationRpa"  resultType="map" parameterType="String">
+
+		select	r.robot_dt as "robotDt"
+			,	r.ci_id as "ciId"
+			,	r.linebiz_id as "linebizId"
+			,	r.robotresult
+			,	r.linebizresptime
+			,	case when r.linebizresptime = -1 then 8
+					 when r.linebizresptime <![CDATA[ > ]]> 30 then 30
+					 else r.linebizresptime
+				end as "timeSize"
+			,	c.namekor
+		from	rparesp r,
+				(	
+					select  c1.ci_id
+						,	l.location_id
+						, 	l.namekor
+					from	ci c1
+						, 	location l
+					where 	c1.location_id = l.location_id
+				) c
+		where 	r.robot_dt =  (
+								 select  max(robot_dt)
+								 from	 rparesp
+							   )
+		and 	r.ci_id = c.ci_id
+		and 	r.ci_id = #{ciId}
+		and 	r.linebiz_id = #{bizId}
+
+
+	</select>
+
+
+	<select id="getRpaTopList"  resultType="map" parameterType="map">
+		
+		select  linebiz_id as "ciId"
+			,	c.ciname as "biz"
+			, 	round(avg(linebizresptime)) as "linebizresptime"
+		from 	rparesp r
+			,	ci c
+		where	robot_dt  <![CDATA[ >= ]]>  date_trunc('day', #{cTime}::timestamp - interval  '1 day')
+		and 	robot_dt  <![CDATA[ < ]]>   date_trunc('day', #{cTime}::timestamp)
+		and		linebizresptime <![CDATA[ >= ]]> 0
+		and		robotresult = 'Success'
+		and 	r.linebiz_id = c.ci_id
+		and		c.status = 'ACTIVE'
+		group by linebiz_id, c.ciname
+		order by round(avg(linebizresptime)) desc
+
+
+	
+	</select>
+	
+
+	<select id="getE2EList"  resultType="Rparespraw" parameterType="map">
+
+			select	robot_dt 
+			, 	c.ci_id 
+			,	c.ciname
+			,   r.robotip
+			,	l.namekor
+			,	r.robotresult
+			, 	r.linebizstep
+			,	r.linebizresult
+			,	r.linebizstart_dt 
+			,	r.linebizend_dt 
+		from	rparespraw r
+			,	ci c
+			,	location l
+		where 	r.linebiz_id = #{ciId}
+		and 	c.ci_id = r.linebiz_id
+		and 	l.location_id = r.location_id
+
+		<if test='rpa != null and rpa != ""'>
+		and 	r.ci_id in
+				<foreach item="item" collection="rpaArr" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+		
+		<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+		and		r.robot_dt <![CDATA[ >= ]]> #{startDate}::timestamp
+		and 	r.robot_dt <![CDATA[ < ]]>  #{endDate}::timestamp
+		</if>
+		
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+					l.namekor like '%' || #{searchParam} || '%'	
+					or	r.robotip like '%' ||#{searchParam} || '%'
+					or	upper(c.ciname) like '%' || upper(#{searchParam}) || '%'			
+				)	
+		</if>
+
+		<if test='orderBy != null and orderBy != ""'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				DESC
+			</if>
+		</if>
+
+		limit	cast(#{pageSize} as integer) OFFSET (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))	
+
+	</select>
+
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		
+		select  count(r.*) AS CNT
+		from	rparespraw r
+			,	ci c
+			,	location l
+		where 	r.linebiz_id = #{ciId}
+		and 	c.ci_id = r.linebiz_id
+		and 	l.location_id = r.location_id
+
+		<if test='rpa != null and rpa != ""'>
+		and 	r.ci_id in
+				<foreach item="item" collection="rpaArr" open="(" separator="," close=")">
+		 		#{item}
+		 		</foreach>
+		</if>
+		
+		<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+		and		r.robot_dt <![CDATA[ >= ]]> #{startDate}::timestamp
+		and 	r.robot_dt <![CDATA[ < ]]>  #{endDate}::timestamp
+		</if>
+
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+					l.namekor like '%' || #{searchParam} || '%'	
+					or	r.robotip like '%' ||#{searchParam} || '%'
+					or	upper(c.ciname) like '%' || upper(#{searchParam}) || '%'	
+				)	
+		</if>
+		
+		<if test='orderBy != null and orderBy != "" and orderBy == "null"'>
+		order by r.robot_dt desc
+		</if>
+
+	</select>
+
+
+	<select id="rpaData"  resultType="map" parameterType="map">
+
+		select  t.location_id
+			,	t.namekor
+			,	array_agg(t.linebizresptime order by t.robot_dt) as "resptime"
+			,	array_agg(t.robot_dt order by t.robot_dt) as "origin"
+		from 	(
+				select  (select l.location_id from ci c, location l where c.location_id = l.location_id and c.ci_id = #{rpaId}) as location_id
+					, 	coalesce(p.linebizresptime, 0) as linebizresptime
+					, 	coalesce(p.robot_dt, d.robot_dt) as robot_dt
+					,	(select l.namekor from ci c, location l where c.location_id = l.location_id and c.ci_id = #{rpaId}) as namekor
+		 		from	(
+							select  l.location_id
+								,   r.linebizresptime
+								,	r.robot_dt
+								,	l.namekor
+							from 	rparesp r
+								,	ci c
+								,	location l
+							where 	r.linebiz_id = #{ciId}
+							and		r.ci_id = c.ci_id
+							and		c.location_id = l.location_id
+							and 	r.ci_id = #{rpaId}
+							<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+							and		r.robot_dt <![CDATA[ >= ]]> #{startDate}::timestamp
+							and 	r.robot_dt <![CDATA[ < ]]>  #{endDate}::timestamp
+							</if>
+							group by  r.linebizresptime, r.robot_dt, l.location_id, l.namekor
+							order by robot_dt
+						) p
+				full outer join
+						(
+							select	r.robot_dt
+							from 	rparesp r
+							where 	r.linebiz_id = #{ciId}
+							and 	r.ci_id in
+							<foreach item="item" collection="rpaArr" open="(" separator="," close=")">
+							#{item}
+							</foreach>
+							<if test='startDate != null and startDate != "" and endDate != "null" and endDate != ""'>
+							and		r.robot_dt <![CDATA[ >= ]]> #{startDate}::timestamp
+							and 	r.robot_dt <![CDATA[ < ]]>  #{endDate}::timestamp
+							</if>
+							group by  r.robot_dt
+							order by robot_dt
+						) d
+				on (p.robot_dt = d.robot_dt)
+				)  t
+		group by t.location_id, t.namekor
+
+	</select>
+
+</mapper>

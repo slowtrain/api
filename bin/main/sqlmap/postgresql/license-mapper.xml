@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : license-mapper.xml
+Description : 라이선스
+수정일     수정자  수정내용
+====       =====  ================
+2019.09.16 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.licensemgmnt.LicenseMapper">
+
+	<sql id="includeSql">
+		select	0 as chk
+			,	tb.* 
+			,	getusername_fn(tb.manager_id) as manager_nm
+			,	getusername_fn(tb.create_id) as create_nm
+			,	getusername_fn(tb.update_id) as update_nm
+			,  	getdomainnm_fn('LICENSEPURCHASETYPE', tb.purchasetype)	as purchasetype_nm
+			,	(
+					select	description
+					from	classstructure tb1
+					where 	tb1.org_id = tb.org_id
+					and		tb1.classstructure_id = tb.swlictype
+				) as swlictype_nm 
+			,	getcompanynm_fn(tb.org_id, tb.company_id)	as companyname	
+		from	swlicense tb
+		where	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='id != null and id != ""'>
+		and		id = #{id}
+		</if>
+		<if test='orgId != null and orgId != ""'>
+		and		org_id = #{orgId}
+		</if>
+		<if test='swlicenseIdD != null and swlicenseIdD != ""'>
+		and		upper(swlicense_id) like '%' || upper(#{swlicenseIdD}) || '%'
+		</if>
+		<if test='swlicnameD != null and swlicnameD != ""'>
+		and		upper(swlicname) like '%' || upper(#{swlicnameD}) || '%'
+		</if>
+		<if test='purchasetypeNmD != null and purchasetypeNmD != ""'>
+		and		( 
+						upper(purchasetype)	 like '%' || upper(#{purchasetypeNmD}) || '%'
+					or 	tb.purchasetype in 	(
+												select	key
+												from	domain
+												where	domain_id = 'LICENSEPURCHASETYPE'
+												and		upper(value) like '%' || upper(#{purchasetypeNmD}) || '%'
+											)
+				)	
+		</if>
+		<if test='purchaseunitD != null and purchaseunitD != ""'>
+		and		upper(purchaseunit) like '%' || upper(#{purchaseunitD}) || '%'
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						swlicense_id like '%' || upper(#{searchParam}) || '%'
+					or	upper(swlicname)  like '%' || upper(#{searchParam}) || '%'		
+					or	swlictype  in 	(
+											select 	classstructure_id
+											from 	classstructure tb1
+											where	description like '%' || #{searchParam} || '%'
+										)		
+					or	purchasetype IN (
+											select 	key
+											from 	domain
+											where	domain_id = 'PURCHASETYPE'
+											and		value like '%' || #{searchParam} || '%'
+										)
+					or	purchaseunit like '%' || upper(#{searchParam}) || '%'
+					or	upper(swlicdescription) like '%' || upper(#{searchParam}) || '%'		
+				)	
+		</if>
+		<if test='searchType != null and searchType != "" and searchType == "relation"'>
+		and 	not exists	(
+								select 	1
+								from	swlicrel tb1
+								where	tb1.org_id = tb.org_id
+								and		(
+												(
+														tb1.swlicense_id1 = tb.swlicense_id
+													and	tb1.swlicense_id2 = #{dialogParam}
+												)	
+											or	(
+														tb1.swlicense_id2 = tb.swlicense_id
+													and	tb1.swlicense_id1 = #{dialogParam}
+												)	
+										)
+							)
+		and 	tb.swlicense_id != 	#{dialogParam}				
+		</if>
+		<if test='searchType != null and searchType != "" and searchType == "licenseuse"'>
+		and		exists 	(
+							select	1
+							from	swliccat tb1
+							left 
+                            join    swcatgrp tb2
+                            on      tb1.swcat_id = tb2.swcatgrp_id
+							where	tb1.org_id = tb.org_id
+							and		tb1.swlicense_id = tb.swlicense_id
+							and		(
+											tb1.swcat_id = #{dialogParam}
+										or	tb2.swcat_id = #{dialogParam}	
+									)
+						)	
+		and		purchaseunit = #{dialogParam2}				
+		</if>
+		<if test='companyD != null and companyD != ""'>
+
+		and		( 
+					exists 	(			
+							select  1 
+							from	(	select  l.*
+											, 	lc.swcat_id
+										from	swlicense l
+											,	swliccat lc
+										where 	l.swlicense_id = lc.swlicense_id
+										and		l.swlicstatus = 'ACTIVE'
+									) a
+								, 	swcat b
+							where 	a.swcat_id = b.swcat_id
+							and		b.swcattype != 'GROUP'	
+							<if test='companyD != "etc"'>
+							and 	upper(b.publishername) like '%' || upper(#{companyD}) || '%'
+							</if>
+							<if test='companyD == "etc"'>
+							and 	(b.publishername is null
+									or upper(b.publishername) = ''
+							</if>
+							and 	tb.swlicense_id = a.swlicense_id
+							)
+					or 
+					exists (
+							select  1
+							from 	swcat sc
+								, 	swcatgrp g
+								, 	swliccat sl
+								, 	swlicense l
+							where 	exists (
+											select  swcat_id  from  swcatgrp g
+											where exists (  select  1  from 
+																		(
+																		select tb2.swcat_id from swlicense tb1, swliccat tb2
+																		where tb1.swlicense_id = tb2.swlicense_id
+																		and	  tb1.swlicstatus = 'ACTIVE'
+																		) a
+																	,	swcat b
+																where 	a.swcat_id = b.swcat_id
+																and 	b.swcattype = 'GROUP'
+																and 	g.swcatgrp_id = b.swcat_id
+														 )
+											and 	sc.swcat_id = swcat_id
+											)
+							and 	g.swcat_id = sc.swcat_id
+							and 	l.swlicense_id = sl.swlicense_id
+							and 	g.swcatgrp_id = sl.swcat_id
+							<if test='companyD != "etc"'>
+							and 	upper(sc.publishername) like '%' || upper(#{companyD}) || '%'
+							</if>
+							<if test='companyD == "etc"'>
+							and 	(sc.publishername is null or upper(sc.publishername) = ''
+							</if>
+							and tb.swlicense_id = l.swlicense_id
+							)
+					)
+		</if>
+
+		<if test='softwareD != null and softwareD != ""'>
+		and		( 
+					exists 	(			
+							select  1 
+							from	(	select  l.*
+											, 	lc.swcat_id
+										from	swlicense l
+											,	swliccat lc
+										where 	l.swlicense_id = lc.swlicense_id
+										and		l.swlicstatus = 'ACTIVE'
+									) a
+								, 	swcat b
+							where 	a.swcat_id = b.swcat_id
+							and		b.swcattype != 'GROUP'	
+							<if test='softwareD != "etc"'>
+							and 	(
+										 b.classstructure_id like '%' || upper(#{softwareD}) || '%'
+									or	b.classstructure_id in 	(
+																select 	classstructure_id
+																from 	classstructure tb1
+																where	description like '%' || #{softwareD} || '%'
+																)	
+									)
+							</if>
+							<if test='softwareD == "etc"'>
+							and 	(b.classstructure_id is null
+									or b.classstructure_id = '')
+							</if>
+							and 	tb.swlicense_id = a.swlicense_id
+							)
+					or 
+					exists (
+							select  1
+							from 	swcat sc
+								, 	swcatgrp g
+								, 	swliccat sl
+								, 	swlicense l
+							where 	exists (
+											select  swcat_id  from  swcatgrp g
+											where exists (  select  1  from 
+																		(
+																		select tb2.swcat_id from swlicense tb1, swliccat tb2
+																		where tb1.swlicense_id = tb2.swlicense_id
+																		and	  tb1.swlicstatus = 'ACTIVE'
+																		) a
+																	,	swcat b
+																where 	a.swcat_id = b.swcat_id
+																and 	b.swcattype = 'GROUP'
+																and 	g.swcatgrp_id = b.swcat_id
+														 )
+											and 	sc.swcat_id = swcat_id
+											)
+							and 	g.swcat_id = sc.swcat_id
+							and 	l.swlicense_id = sl.swlicense_id
+							and 	g.swcatgrp_id = sl.swcat_id
+							<if test='softwareD != "etc"'>
+							and 	(
+										sc.classstructure_id like '%' || upper(#{softwareD}) || '%'
+									or	sc.classstructure_id in 	(
+																select 	classstructure_id
+																from 	classstructure tb1
+																where	description like '%' || #{softwareD} || '%'
+																)	
+									)
+							</if>
+							<if test='softwareD == "etc"'>
+							and 	(sc.classstructure_id is null or sc.classstructure_id = '')
+							</if>
+							and tb.swlicense_id = l.swlicense_id
+							)
+					)
+		</if>
+
+		<if test='ls != null and ls != "" and ls == "YEAR"'>
+        and	  to_char(purchase_dt, 'yyyy') = #{key}
+		</if>
+
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id desc
+		</if>			
+	</sql>	
+
+	<select id="list"  resultType="SwLicense" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>
+
+	<select id="licenseId"  resultType="java.lang.String" parameterType="map">
+		select  getautonum_fn(#{orgId}, 'swlicense', 'swlicense_id')	as swlicense_id	
+	</select>
+
+	<select id="swcatList"  resultType="Swcat" parameterType="map">
+		select	tb1.id as rel_id
+			,	tb2.*
+			,	getclassnm_fn(tb1.org_id, tb2.classstructure_id) as classstructure_nm	 
+		from	swliccat tb1
+			,	swcat tb2
+		where	tb1.swcat_id = tb2.swcat_id
+		and		tb1.swlicense_id = #{swlicenseId}	
+	</select>
+
+	<select id="chkDupSwcat"  resultType="map" parameterType="map">
+		select  tb1.*
+        from    (
+                    select  (
+                                case when tb2.swcat_id is null then tb1.swcat_id
+                                     else tb2.swcat_id
+                                     end
+                            ) swcat_id  
+                        ,   tb3.hierarchypath        
+                    from    swcat tb1
+                    left
+                    join    swcatgrp tb2
+                    on      tb1.swcat_id = tb2.swcatgrp_id    
+                    left
+                    join    swcat tb3    
+                    on      tb2.swcat_id = tb3.swcat_id
+                    where   tb1.swcat_id in 
+					<foreach item="item" collection="targetChkList" open="(" separator="," close=")">
+						#{item}	
+					</foreach>
+                ) tb1    
+        where   exists  (
+                                select  1
+                                from    swcat tb4
+                                left
+                                join    swcatgrp tb5
+                                on      tb4.swcat_id = tb5.swcatgrp_id    
+                                left
+                                join    swcat tb6    
+                                on      tb5.swcat_id = tb6.swcat_id
+                                where   tb4.swcat_id = #{sourceChk}
+                                and     (
+                                                (
+                                                    tb4.hierarchypath like '%'||tb1.swcat_id||'%'
+                                                )   
+                                            or  (
+                                                    tb6.hierarchypath like '%'||tb1.swcat_id||'%'
+                                                )   
+                                            or  (
+                                                    tb1.hierarchypath like '%'||tb4.swcat_id||'%'
+                                                )      
+                                            or  (
+                                                    tb1.hierarchypath like '%'||tb6.swcat_id||'%'
+                                                )    
+                                        )   
+                        )
+	</select>
+	
+	<select id="relationList"  resultType="SwLicense" parameterType="map">
+		select	tb1.* 
+			,	tb2.id as rel_id
+			,	getusername_fn(tb1.manager_id) as manager_nm
+			,	getusername_fn(tb1.update_id) as update_nm
+			,  	getdomainnm_fn('PURCHASETYPE', tb1.purchasetype)	as purchasetype_nm
+			,	(
+					select	description
+					from	classstructure tb
+					where 	tb.org_id = tb1.org_id
+					and		tb.classstructure_id = tb1.swlictype
+				) as swlictypeNm  
+		from	swlicense tb1
+			,	swlicrel tb2
+		where	tb1.org_id = tb2.org_id
+		and		tb1.swlicense_id = tb2.swlicense_id2
+		and		tb2.swlicense_id1 = #{swlicenseId}
+
+		union all
+
+		select	tb1.* 
+			,	tb2.id as rel_id
+			,	getusername_fn(tb1.manager_id) as manager_nm
+			,	getusername_fn(tb1.update_id) as update_nm
+			,  	getdomainnm_fn('PURCHASETYPE', tb1.purchasetype)	as purchasetype_nm
+			,	(
+					select	description
+					from	classstructure tb
+					where 	tb.org_id = tb1.org_id
+					and		tb.classstructure_id = tb1.swlictype
+				) as swlictypeNm  
+		from	swlicense tb1
+			,	swlicrel tb2
+		where	tb1.org_id = tb2.org_id
+		and		tb1.swlicense_id = tb2.swlicense_id1
+		and		tb2.swlicense_id2 = #{swlicenseId}
+	</select>
+
+	<select id="companyLicense" resultType="map">
+		select  coalesce((tb.publishername),'') as "companytype"
+			,	case when tb.publishername != '' and tb.publishername is not null then tb.publishername else  getLabel_fn('ASSETDASHBOARD', 'etc','ko-kr') end  as "company"
+			,   count(*) as "cnt"
+		from 	(
+				select  publishername
+				from 	swcat sc
+				where 	exists (
+								select  swcat_id from swcatgrp g
+								where 	exists (
+												select 1 from 
+														(
+														select  tb2.swcat_id  from  swlicense tb1,  swliccat tb2
+														where 	tb1.swlicense_id = tb2.swlicense_id
+														and	  	tb1.swlicstatus = 'ACTIVE'
+														) a
+													,	swcat b
+												where 	a.swcat_id = b.swcat_id
+												and 	b.swcattype = 'GROUP'
+												and 	g.swcatgrp_id = b.swcat_id
+												)
+								and 	sc.swcat_id = swcat_id
+								)
+				union all	
+				select  b.publishername
+				from  	(		
+						select  lc.swcat_id
+						from	swlicense l
+							,	swliccat lc
+						where 	l.swlicense_id = lc.swlicense_id
+						and		l.swlicstatus = 'ACTIVE'
+						) a
+					, 	swcat b
+				where 	a.swcat_id = b.swcat_id	
+				and 	b.swcattype != 'GROUP'			
+			) tb
+		group by tb.publishername
+    </select>
+
+	<select id="swlictypeLicense" resultType="map">
+
+		select  coalesce((tb.classstructure_id),'') as "swlictype"
+			,	case  when  tb.classstructure_id != ''  and  tb.classstructure_id is not null
+			          then  split_part(getclassnm_fn('KAI',tb.classstructure_id),'(',1)
+					  else  getLabel_fn('ASSETDASHBOARD', 'etc','ko-kr')
+					  end  as "swlictypeName"
+			,   count(*) as "cnt"
+		from 	(
+					select  classstructure_id
+					from 	swcat sc
+					where 	exists  (
+									select  swcat_id  from  swcatgrp g
+									where exists (
+													select 1 from 
+															(
+															select  tb2.swcat_id from swlicense tb1, swliccat tb2
+															where 	tb1.swlicense_id = tb2.swlicense_id
+															and	  	tb1.swlicstatus = 'ACTIVE'
+															) a
+														,	swcat b
+													where 	a.swcat_id = b.swcat_id
+													and 	b.swcattype = 'GROUP'
+													and 	g.swcatgrp_id = b.swcat_id
+												)
+									and 	sc.swcat_id = swcat_id
+									)
+				union all	
+					select  b.classstructure_id
+					from  	(		
+								select 	lc.swcat_id
+								from	swlicense l
+									,	swliccat lc
+								where 	l.swlicense_id = lc.swlicense_id
+								and		l.swlicstatus = 'ACTIVE'
+							) a
+						, 	swcat b
+					where 	a.swcat_id = b.swcat_id	
+					and 	b.swcattype != 'GROUP'			
+				) tb
+			group by tb.classstructure_id
+    </select>
+
+</mapper>

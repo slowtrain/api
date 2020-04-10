@@ -1,0 +1,3 @@
+wsimport -verbose -keep http://icam.koreaaero.com/episode/ws/user.wsdl -d ./bin -s ./src  -b http://icam.koreaaero.com/episode/async/user-async-bindings.xml -encoding UTF-8
+rem wsimport -verbose -keep http://icamdev.koreaaero.com/episode/ws/user.wsdl -d ./bin -s ./src -b http://icamdev.koreaaero.com/episode/async/user-async-bindings_dev.xml -encoding UTF-8
+rem wsimport -verbose -keep http://icamlocal.koreaaero.com:8080/episode/ws/user.wsdl -d ./bin -s ./src -b http://icamlocal.koreaaero.com:8080/episode/async/user-async-bindings_local.xml -encoding UTF-8

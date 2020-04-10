@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : conversion-mapper.xml
+Description : 변환
+수정일     수정자  수정내용
+====       =====  ================
+2019.10.21 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.asset.management.conversion.ConversionMapper">
+
+	<sql id="includeSql">
+		select	tb.*
+			,	getclassnm_fn('KAI', tb.classstructure_id) as classstructure_nm
+			,	getusername_fn(tb.create_id) as create_nm
+			,	getusername_fn(tb.update_id) as update_nm
+		from 	conversion tb
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='id != null and id != ""'>
+		and		id = #{id}
+		</if>
+		<if test='chkDup'>
+		and		tablename 	= #{tablename}		
+		and		classstructure_id 	= #{classstructureId}
+		and		columnname 	= #{columnname}
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						tablename like '%' || lower(#{searchParam}) || '%'		
+					or	columnname like '%' || lower(#{searchParam}) || '%'		
+					or	classstructure_id like '%' || upper(#{searchParam}) || '%'		
+					or	classstructure_id in 	(
+													select 	classstructure_id
+													from 	classstructure tb1
+													where	upper(description) like '%' || upper(#{searchParam}) || '%'
+												)		
+					or	converter_id like '%' || upper(#{searchParam}) || '%'		
+				)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id
+		</if>
+	</sql>	
+
+	<select id="list"  resultType="Conversion" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSql"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="listTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSql"/>
+				) tb1
+	</select>	
+
+	<sql id="includeSqlConverter">
+		select	0 as chk
+			,	tb.*
+		from 	converter tb
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test='id != null and id != ""'>
+		and		id = #{id}
+		</if>
+		<if test='converterId != null and converterId != ""'>
+		and		converter_id = #{converterId}
+		</if>
+		<if test='converterId != null and converterId != "" and originalvalue != null and originalvalue != ""'>
+		and		converter_id = #{converterId}
+		and		originalvalue = #{originalvalue}
+		</if>
+		<if test='searchParam != null and searchParam != "" and searchParam != "null"'>
+		and		(
+						converter_id like '%' || upper(#{searchParam}) || '%'		
+					or	upper(originalvalue) like '%' || upper(#{searchParam}) || '%'		
+					or	upper(convertedvalue) like '%' || upper(#{searchParam}) || '%'	
+				)	
+		</if>
+		<if test='orderBy != null and orderBy != "" and orderBy != "null"'>
+		order by ${orderBy}
+			<if test='sort != null and orderBy != "" and sort == "descending" '>
+				desc
+			</if>
+		</if>
+
+		<if test='orderBy == null or orderBy == "" or orderBy == "null"'>
+		order by id desc
+		</if>
+	</sql>	
+
+	<select id="converterList"  resultType="Converter" parameterType="map">
+		select	tb1.*
+		from	(
+					<include refid="includeSqlConverter"/>
+				) TB1
+		limit	cast(#{pageSize} as integer) offset (cast(#{pageSize} as integer) * (cast(#{page} as integer)-1))		
+	</select>
+
+	<select id="converterListTot"  resultType="java.lang.Integer" parameterType="map">
+		select	count(tb1.*) as cnt
+		from	(
+					<include refid="includeSqlConverter"/>
+				) tb1
+	</select>
+
+	<select id="converterCodeList"  resultType="Converter">
+		select	distinct
+				converter_id
+		from	converter
+	</select>
+
+	<select id="convertedvalueList"  resultType="map" parameterType="map">
+		select  distinct
+        		tb.convertedvalue
+		from    converter tb
+		where   tb.converter_id = #{converterId}
+	</select>
+
+	<update id="convertCI" parameterType="map">
+		update  ci tb1
+		set     ${columnname} = #{convertedvalue}
+		where   exists 	(     
+							select  tb2.ci_id
+							from    disci tb2
+								,	discimaptoci tb3
+							where  	tb2.datasrc = tb3.datasrc
+							and		tb2.discitype = tb3.discitype
+							and		tb2.disciclass = tb3.disciclass
+							and		tb2.ci_id = tb1.ci_id
+							and		tb3.classstructure_id = tb1.classstructure_id
+							and		tb3.classstructure_id = #{classstructureId}
+							and		${columnname} in (
+														select  tb4.originalvalue
+														from    converter tb4
+														where   tb4.converter_id = #{converterId}
+														and     tb4.convertedvalue = #{convertedvalue}
+													)
+						)   
+	</update>						
+</mapper>

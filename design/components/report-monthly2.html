@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html class="no-js" lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<title></title>
+<meta name=”viewport” content=”width=device-width, initial-scale=1.0" />
+<meta name="description" content="">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+<link href="../assets/css/common.css" rel="stylesheet">
+</head>
+<body>
+<div id="app" class="wrapper">
+<section>
+<div class="content-wrap">
+<!-- report -->
+<div class="report-list-wrap">
+<!-- report detail -->
+<div class="report-detail">
+<div class="detail-wrap">
+
+
+
+
+
+
+
+
+
+<!-- report/monthly2 -->
+<div class="report-start"><!-- style="display: none" -->
+    <div class="header clearfix">
+        <span class="f">30 Apr 2019</span>
+        <span class="s">Monthly Report  -  April 2019</span>
+        <span class="t">Create by System</span>
+    </div>
+
+    <p class="line-title">CPU Usage for Server</p>
+    <div class="issue-chart cpu">
+        <canvas id="cpuUsageServerChart"></canvas>
+    </div>
+    <div class="custom_table-grid-sm">
+        <table class="notable">
+            <cologroup>
+                <col width="40%" />
+                <col width="*" />
+                <col width="*" />
+                <col width="*" />
+            </cologroup>
+            <thead>
+            <tr>
+                <th>Server Name</th>
+                <th>Average</th>
+                <th>Max</th>
+                <th>Min</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="l"><span class="sign type1"></span>Cloud Server - Seoul - Violet001</td>
+                <td>47%</td>
+                <td>62%</td>
+                <td>12%</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- //report/monthly2 -->
+
+
+
+
+
+
+
+
+
+
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.js"></script>
+<script src="../assets/js/util.js"></script>
+<script src="../assets/js/custom.js"></script>
+<script>
+cpuUsageServerChart();
+</script>
+</body>
+</html>

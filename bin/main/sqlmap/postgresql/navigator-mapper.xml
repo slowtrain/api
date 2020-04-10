@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+SQL File Name : navigator-mapper.xml
+Description : 메뉴
+수정일     수정자  수정내용
+====       =====  ================
+2019.11.20 최영훈  최초 생성
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itmsg.episode.app.system.navigator.NavigatorMapper">
+
+	<select id="list"  resultType="Navigator" parameterType="map">
+		select	tb1.*
+			,	(select tb2.url from application tb2 where tb2.app_id = tb1.navigator_id) as url
+			,   coalesce((
+							select  tb2.description
+							from    applabel tb2
+							where   tb2.name = tb1.navigator_id
+							and     tb2.lang = #{lang}
+							and     tb2.app_id = 'NAVIGATOR'
+						), tb1.navigator_id) as name 
+		from 	navigator tb1
+		where 	1=1
+		<if test="USERFILTER != null and USERFILTER != ''">
+		and 	${USERFILTER}
+		</if>
+		<if test="orgId != null and orgId != ''">
+		and		tb1.org_id = #{orgId}	
+		</if>
+		<if test="parent != null and parent != ''">
+		and		tb1.parent = #{parent}		
+		</if>
+		<if test="navigatorId != null and navigatorId != ''">
+		and		tb1.navigator_id = #{navigatorId}		
+		</if>
+		<if test="type != null and type != ''">
+		and		tb1.type = #{type}		
+		</if>		
+		order by tb1.parent, tb1.order_seq
+	</select>
+
+	<select id="treeList"  resultType="map" parameterType="map">
+		select	tb1.*
+			,	(select tb2.url from application tb2 where tb2.app_id = tb1.navigator_id) as url
+			,   coalesce((
+							select  tb2.description
+							from    applabel tb2
+							where   tb2.name = tb1.navigator_id
+							and     tb2.lang = #{lang}
+							and     tb2.app_id = 'NAVIGATOR'
+						), tb1.navigator_id) as name 
+		from 	navigator tb1
+		where 	1=1
+		<if test="orgId != null and orgId != ''">
+		and		org_id = #{orgId}	
+		</if>
+		<if test="locationId != null and locationId != ''">
+		and		navigator_id = #{navigator_id}		
+		</if>
+		order by tb1.parent, tb1.order_seq
+		<!-- ORDER BY HIERARCHYPATH -->
+	</select>
+
+	<select id="appSearchList"  resultType="Application" parameterType="map">
+		select	id
+			,	app_id
+			,	description
+			,	url
+			,	status
+			,	create_dt
+			,	create_id
+			,	(select first_name||last_name createdisplayname from esuser where username = application.create_id) createdisplayname
+			,	update_dt
+			,	update_id
+			,	(select first_name||last_name updatedisplayname from esuser where username = application.update_id) updatedisplayname
+		from 	application
+		where 	app_id not in	(
+									select	navigator_id
+									from	navigator
+									where	type = 'APP'
+								)
+		order by app_id							
+	</select>
+
+	<select id="deleteAncestorList"  resultType="map" parameterType="map">
+		select  split_part(tb1.hierarchypath||'/',tb2.ancestor||'/',1) as path
+			,   tb2.ancestor
+			,   tb1.navigator_id 
+		from    navigator tb1
+			,   (
+					select  org_id    
+						,   navigator_id
+						,   ancestor
+					from    navancestor
+					where   org_id = #{orgId}
+					and		ancestor = #{navigatorId}
+				) tb2
+		where   tb1.navigator_id = tb2.navigator_id  
+		and     tb1.org_id = tb2.org_id
+	</select>
+
+	<delete id="deleteAncestor" parameterType="map">
+        delete 	from navancestor
+        where   org_id = #{orgId}
+		and		ancestor = #{ancestor}
+		and		navigator_id = #{navigatorId}	
+    </delete>
+
+	<select id="mainNaviList"  resultType="map" parameterType="map">
+		select  tb.*
+		from    (
+					select  distinct 
+							coalesce(tb3.parent,'') as parent
+						,   tb3.navigator_id
+						,   coalesce((
+								select  tb6.description
+								from    applabel tb6
+								where   tb6.name = tb3.navigator_id
+								and     tb6.lang = #{lang}
+								and     tb6.app_id = 'NAVIGATOR'
+							), tb3.navigator_id) AS name    
+						,   coalesce(tb2.url, '') AS url
+						,   tb3.hierarchypath
+						,   coalesce(tb3.navigatoriconsvg, '') AS icon
+						,	tb3.order_seq
+					from    navancestor tb1
+					left 
+					outer 
+					join    application tb2
+					on      tb1.ancestor = tb2.app_id    
+						,   navigator tb3
+					where   tb1.org_id = tb3.org_id
+					and     tb1.ancestor = tb3.navigator_id
+					and     tb1.navigator_id in (
+													select  distinct
+															tb5.app_id
+													from    roleuser tb4
+														,   roleauth tb5
+													where   tb4.role_id = tb5.role_id
+													and     tb4.username = #{userId}
+												)
+				) tb                                          
+		order by tb.parent, tb.order_seq
+	</select>
+
+	<select id="childNodeList"  resultType="map" parameterType="map">
+		select  tb.*
+		from    navigator tb
+		where   orgId = #{orgId}
+		and		tb.parent = #{navigatorId}
+		order by tb.hierarchypath  
+	</select>
+</mapper>

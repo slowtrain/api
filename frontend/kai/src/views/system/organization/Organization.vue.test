@@ -1,0 +1,271 @@
+<!--
+ Class Name  : Organization.vue
+ Description : 조직
+ Modification Information
+ 수정일      수정자  수정내용
+ =========   ====== =========
+ 2019.11.19  최영훈  최초 생성
+-->
+<template>
+  <div class="animated fadeIn">
+    <b-card>
+      <b-row>
+        <b-col>
+          ORGANIZATION
+        </b-col>
+      </b-row>
+       <b-row>
+          <div class='col'>
+            <p class='grid-line'></p>
+            <b-button variant="primary" class="px-3 sm" v-on:click="mem" >초기화</b-button>
+            <data-tables v-if="tableVisible" ref="listGrid" id="listGrid" layout='table, pagination' :table-props='listGrid.tableProps' :page-size='listGrid.pageProps.pageSize'
+                        :data='listGrid.data' :filters='listGrid.filters' :pagination-props='listGrid.pageProps'>
+              <el-table-column prop="id" :label="labels.id" width="100" ></el-table-column>
+              <el-table-column prop="appId" :label="labels.orgId" :sortable="true" width="200"></el-table-column>
+              <el-table-column prop="description" :label="labels.description" :sortable="true"></el-table-column>
+            </data-tables>
+          </div>
+        </b-row>
+    </b-card>
+  </div>
+</template>
+<script>
+/* eslint-disable no-new */
+export default {
+  name: 'ORGANIZATION',
+  data () {
+    return {
+      tableVisible: true,
+      userFlag: true,
+      labels: {
+        add: '',
+        title: ' ',
+        user: '',
+        detail: '',
+        id: '',
+        orgId: '',
+        usergroupId: '',
+        description: '',
+        createDt: '',
+        createId: '',
+        updateDt: '',
+        updateId: '',
+        username: '',
+        firstname: '',
+        lastname: '',
+        status: '',
+        email: '',
+        tel: '',
+        search: '',
+        authorityId: ' ',
+        appId: ' ',
+        userDialogTitle: '',
+        multipleAdd: '',
+        new: '',
+        close: '',
+        save: '',
+        saveMessage: '',
+        deleteMessage: '',
+        delete: '',
+        descriptionMessage: '',
+        groupExist: '',
+        groupMessage: '',
+        lengthMessage: '',
+        list: '',
+        childUserMessage: '',
+        excelDownload: '',
+        reset: '',
+        chkChgDataMsg: '',
+        selectNullMsg: ''
+      },
+      listGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return ' font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          }
+        },
+        pageProps: {
+          pageSize: 10,
+          pageSizes: [10, 15, 20]
+        },
+
+        filters: [{
+          prop: ['usergroupId', 'description', 'status'],
+          value: ''
+        }, {
+          prop: ['usergroupId'],
+          value: ''
+        }, {
+          prop: ['description'],
+          value: ''
+        }, {
+          prop: ['status'],
+          value: ''
+        }],
+        pageIndex: 1,
+        rowIndex: -1,
+        filteredData: [],
+        data: [],
+        titles: [
+          {prop: 'id', label: 'id', width: '70px'},
+          {prop: 'orgId', label: 'orgId', width: '200px'},
+          {prop: 'usergroupId', label: 'usergroupId', width: '200px'},
+          {prop: 'description', label: 'description', width: '230px'},
+          {prop: 'status', label: 'status', width: '200px'},
+          {prop: 'createDt', label: 'createDt', width: '250px'},
+          {prop: 'createId', label: 'createId', width: '150px'},
+          {prop: 'createNm', label: 'createId', width: '150px'},
+          {prop: 'updateDt', label: 'updateDt', width: '250px'},
+          {prop: 'updateId', label: 'updateId', width: '150px'},
+          {prop: 'updateNm', label: 'updateId', width: '150px'}
+        ],
+        columns: ['id', 'orgId', 'usergroupId', 'description', 'status', 'createDt', 'createId', 'updateDt', 'updateId'],
+        columnNames: ['id', 'orgId', 'usergroupId', 'description', 'status', 'createDt', 'createId', 'updateDt', 'updateId'],
+        searchParam: '',
+        searchParamDetail: {
+          usergroupId: '',
+          description: '',
+          status: ''
+        },
+        currentData: {
+        }
+      },
+      userGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return 'font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          }
+        },
+        data: [],
+        currentData: {
+        },
+        pageProps: {
+          pageSize: 5,
+          pageSizes: [5, 10, 15]
+        },
+        filters: [{
+          prop: ['username', 'firstname', 'email', 'tel'],
+          value: ''
+        }],
+        filteredData: [],
+        columns: ['username', 'firstname', 'lastname', 'status'],
+        columnNames: ['username', 'firstname', 'lastname', 'status'],
+        searchParam: '',
+        selection: []
+      },
+      userSearchGrid: {
+        tableProps: {
+          border: false,
+          stripe: true,
+          headerCellStyle: function () {
+            return 'font-family: sans-serif; font-size: 14px; color: #28313b; font-weight: bold; height:60px'
+          }
+        },
+        data: [],
+        currentData: {
+        },
+        pageProps: {
+          pageSize: 10,
+          pageSizes: [10, 15, 20]
+        },
+        filters: [{
+          prop: ['username', 'firstname', 'email'],
+          value: ''
+        }],
+        filteredData: [],
+        columns: ['username', 'firstname', 'lastname', 'status'],
+        columnNames: ['username', 'firstname', 'lastname', 'status'],
+        searchParam: '',
+        selection: []
+      },
+      userSelect: [],
+      orgSelect: [],
+      userDialogFlag: false,
+      activeTab: 'list',
+      userGroupStatusSelect: [],
+      authorities: {
+        USERGROUP_SAVE: false,
+        USERGROUP_DELETE: false
+      },
+      validMsg: {
+        usergroupIdMsg: '',
+        descriptionMsg: ''
+      }
+    }
+  },
+  watch: {
+  },
+  computed: {
+  },
+  methods: {
+    /*
+    sleep: function (ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    },
+    */
+    sleep: function (ms) {
+      let ts1 = new Date().getTime() + ms
+      let ts2
+      do ts2 = new Date().getTime()
+      while (ts2 < ts1)
+    },
+    mem: function () {
+      this.listGrid.data = []
+      // this.sleep(700)
+      // this.tableVisible = false
+      // this.$data.sample = []
+      // console.log(this.$refs.listGrid)
+      // console.log(this.$refs.listGrid.$options)
+    
+      // this.$refs.listGrid.$destroy()
+      // this.$refs.listGrid.curTableData = []
+      // this.$refs.listGrid.filters = []
+      // this.$refs.listGrid.sortedData = []
+      // this.$refs.listGrid.data = []
+      // console.log(this._data)
+      
+      // console.log('destroy !!!!!???')
+      // this.sample = []
+      
+      
+      // this.tableVisible = false
+      /*
+      let start = new Date().getTime() + 3000
+      while (new Date().getTime() < start ) {
+
+      }
+      */
+      // this.tableVisible = false
+    }
+  },
+  created () {
+    this.listGrid.data = []
+  },
+  mounted () {
+    // this.listGrid.data = []
+    this.$http.get('/episode/api/system/common/label').then(res => {
+      this.listGrid.data = res.data
+    }).catch(error => {
+      console.log(error)
+    })
+  },
+  beforeDestroy () {
+    // this.mem()
+    this.listGrid.data = []
+    this.$nextTick(function(){
+      console.log(' nexttick')
+      this.tableVisible = false
+    })
+    /*
+    this.$nextTick(function () {
+      this.sample = []
+    })
+    */
+  },
+
+}
+</script>
