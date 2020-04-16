@@ -19,6 +19,10 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
+public class NotiConfig{
+}
+
+/*
 @Configuration
 @EnableTransactionManagement
 //@MapperScan(basePackages = {"com.itmsg.episode.app"})
@@ -58,7 +62,6 @@ public class NotiConfig{
         DataSourceTransactionManager manager = new DataSourceTransactionManager(notiDataSource);
         return manager;
     }
-    
-    
 
 }
+*/

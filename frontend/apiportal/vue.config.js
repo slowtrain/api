@@ -8,12 +8,13 @@ module.exports = {
         }
     }
   },
-  // publicPath: '/',
+  publicPath: '/',
   
-  publicPath:
-    process.env.NODE_ENV === "production"
-      ? "/justdo-vue-pro/preview/horizontal-default-light/"
-      : "/",
+
+  //publicPath:
+  //  process.env.NODE_ENV === "production"
+  //    ? "/justdo-vue-pro/preview/horizontal-default-light/"
+  //    : "/",
   // where to output built files
   outputDir: 'dist',
 

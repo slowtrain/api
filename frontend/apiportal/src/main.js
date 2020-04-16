@@ -42,6 +42,7 @@ Vue.use(directive)
 
 locale.use(lang)
 
+/*
 Axios.post(
   '/episode/api/authentication/refresh'
 ).then((res) => {
@@ -65,7 +66,7 @@ document.addEventListener('click', () => {
     timer.resetTimer()
   }
 })
-
+*/
 
 
 new Vue({

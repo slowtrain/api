@@ -200,7 +200,67 @@
                     </a>
                     <div class="submenu">
                         <div class="col-group-wrapper row">
-                            <div class="col-group col-md-3">
+                            <div class="col-group col-md-2">
+                                <p class="category-heading">Gateway</p>
+                                <ul class="submenu-item">
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/config/application">Gateway</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">SR</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">API</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">APPS</router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                      
+                            <div class="col-group col-md-2">
+                                <p class="category-heading">Policy</p>
+                                <ul class="submenu-item">
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">과금 정책</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">할인 정책</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">청구 내역</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">기관할인 정책</router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-group col-md-2">
+                                <p class="category-heading">Statistics</p>
+                                <ul class="submenu-item">
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">API 사용 현황</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">API 제공 현황</router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-group col-md-2">
+                                <p class="category-heading">Content</p>
+                                <ul class="submenu-item">
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">이용약관</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">개인정보 처리방침</router-link>
+                                    </li>
+                                    <li class="nav-item">
+                                        <router-link class="nav-link" to="/system/user/user">개인정보 수집동의서</router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-group col-md-2">
                                 <p class="category-heading">System</p>
                                 <ul class="submenu-item">
                                     <li class="nav-item">
@@ -212,11 +272,6 @@
                                     <li class="nav-item">
                                         <router-link class="nav-link" to="/system/user/role">Role</router-link>
                                     </li>
-                                </ul>
-                            </div>
-                            <div class="col-group col-md-3">
-                                <p class="category-heading">Workflow</p>
-                                <ul class="submenu-item">
                                     <li class="nav-item">
                                         <router-link class="nav-link" to="/system/workflow/designer">Designer</router-link>
                                     </li>
@@ -228,9 +283,10 @@
                                     </li>
                                 </ul>
                             </div>
-                            <div class="col-group col-md-3">
+                            <div class="col-group col-md-2">
                                 <p class="category-heading">Config</p>
                                 <ul class="submenu-item">
+
                                     <li class="nav-item">
                                         <router-link class="nav-link" to="/system/config/application">Application</router-link>
                                     </li>
